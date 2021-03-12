@@ -10,9 +10,9 @@ mutex m;
 
 // Constructor
 
-Server :: Server(string name)
+Server :: Server(string ip)
 {
-    name = name;
+    ip = ip;
 }
 
 
