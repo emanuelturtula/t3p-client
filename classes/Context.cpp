@@ -5,23 +5,25 @@ using namespace std;
 
 mutex m;
 
-/**
- * Member functions for class Context
- * */
+// Constructor
 
 Context :: Context(context_t c)
 {
     context = c;
 }
 
+// Getters
+
 context_t Context :: getContext()
 {
-    std::lock_guard<std::mutex> guard(m);
+    lock_guard<mutex> guard(m);
     return context;
 }
 
+// Setters
+
 void Context :: setContext(context_t c)
 {
-    std::lock_guard<std::mutex> guard(m);
+    lock_guard<mutex> guard(m);
     context = c;
 }
