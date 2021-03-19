@@ -27,7 +27,7 @@ status_t send_discover_broadcast(list<T3PResponse> *t3pResponseList)
     int sockfd;
     struct timeval timeout;
     struct sockaddr_in server_addr;
-    char *message = "DISCOVERBROADCAST \r\n \r\n";
+    const char *message = "DISCOVERBROADCAST \r\n \r\n";
 
     // Create socket
     sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -65,6 +65,49 @@ status_t send_discover_broadcast(list<T3PResponse> *t3pResponseList)
     return STATUS_OK;
 }
 
+status_t send_discover(string ip, T3PResponse *t3pResponse)
+{
+    // Define variables
+    int sockfd;
+    struct timeval timeout;
+    struct sockaddr_in server_addr;
+    char *message;
+    const char *c_ip = ip.c_str();
+    list<T3PResponse> t3pResponseList;
+    sprintf(message, "DISCOVER|%s \r\n \r\n", c_ip);
+
+    // Create socket
+    sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (sockfd < 0)
+        return ERROR_SOCKET_CREATION;
+        
+    // Configure timeout
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 100000;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
+        return ERROR_SOCKET_CONFIGURATION;
+
+    // Set server_addr port, protocol and address
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(UDP_PORT);
+    server_addr.sin_addr.s_addr = inet_addr(c_ip);
+    
+    // Send message
+    if (sendto(sockfd, message, strlen(message), 0, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0)
+        return ERROR_SENDING_MESSAGE;
+    
+    if (receive(sockfd, server_addr, &t3pResponseList) != STATUS_OK)
+        return ERROR_RECEIVING_MESSAGE;
+    
+    close(sockfd);
+
+    if (t3pResponseList.empty())
+        return ERROR_NO_SERVERS_ONLINE;
+    
+    *t3pResponse = t3pResponseList.front();
+    
+    return STATUS_OK;
+}
 
 /**
  * Internal functions
@@ -118,6 +161,7 @@ status_t parse_response(string response, T3PResponse *t3pResponse)
         tempStringList.push_back(response.substr(0, pos));
         response.erase(0, pos+3);
     }
+
 
     (*t3pResponse).statusCode = tempStringList.front();
     tempStringList.pop_front();
