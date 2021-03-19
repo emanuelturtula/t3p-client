@@ -6,7 +6,7 @@
         {
             "type": "cppbuild",
             "label": "Build udp functions",
-            "command": "/bin/g++-9",
+            "command": "/bin/g++",
             "args": [
                 "-g",
                 "${workspaceFolder}/cpp/*.cpp",
@@ -20,7 +20,7 @@
                 "$gcc"
             ],
             "group": "build",
-            "detail": "compiler: /bin/g++-9"
+            "detail": "compiler: /bin/g++"
         }
     ]
 }

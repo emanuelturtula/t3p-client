@@ -65,13 +65,13 @@ status_t send_discover_broadcast(list<T3PResponse> *t3pResponseList)
     return STATUS_OK;
 }
 
-status_t send_discover(string ip, T3PResponse *t3pResponse)
+status_t send_discover(string ip, T3PResponse *t3pResponseObj)
 {
     // Define variables
     int sockfd;
     struct timeval timeout;
     struct sockaddr_in server_addr;
-    char *message;
+    char message[32];
     const char *c_ip = ip.c_str();
     list<T3PResponse> t3pResponseList;
     sprintf(message, "DISCOVER|%s \r\n \r\n", c_ip);
@@ -104,7 +104,7 @@ status_t send_discover(string ip, T3PResponse *t3pResponse)
     if (t3pResponseList.empty())
         return ERROR_NO_SERVERS_ONLINE;
     
-    *t3pResponse = t3pResponseList.front();
+    *t3pResponseObj = t3pResponseList.front();
     
     return STATUS_OK;
 }
@@ -161,7 +161,6 @@ status_t parse_response(string response, T3PResponse *t3pResponse)
         tempStringList.push_back(response.substr(0, pos));
         response.erase(0, pos+3);
     }
-
 
     (*t3pResponse).statusCode = tempStringList.front();
     tempStringList.pop_front();
