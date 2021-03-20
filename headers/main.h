@@ -1,2 +1,3 @@
-#include "../headers/types.h"
-#include "../headers/t3p_client.h"
+#pragma once
+
+#define DEBUG_UDP

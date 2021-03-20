@@ -31,5 +31,7 @@
 *.out
 *.app
 
-test_thread*
-.vscode/*
+test_server/*
+debug/*
+build/*
+
