@@ -94,7 +94,6 @@ status_t search_local_servers_menu(context_t *context, Server *server)
             {
                 cout << "Please select a server number or type '\\back' to go back to main menu" << endl;
                 getline(cin, selection);
-                // TODO: ADD VALIDATION TO ONLY ALLOW NUMBERS OR "\back"
                 if (selection.compare("\\back") == 0)
                 {
                     valid_choice = true;
