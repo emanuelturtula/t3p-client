@@ -15,6 +15,12 @@ enum status_t {
     ERROR_BAD_MESSAGE_FORMAT
 };
 
+enum context_t {
+    MAIN_MENU,
+    SEARCH_BY_IP,
+    SEARCH_LOCAL_SERVERS
+};
+
 class Server {
     public:
         Server();
