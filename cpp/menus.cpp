@@ -55,6 +55,7 @@ status_t search_local_servers_menu(context_t *context, Server *server)
         t3pResponseList.clear();
         serverList.clear();
         system("clear");
+        cout << "SEARCH LOCAL SERVERS MENU" << endl;
         cout << "Searching local servers" << endl;
         if ((status = send_discover_broadcast(&t3pResponseList)) != STATUS_OK)
         {
@@ -145,6 +146,54 @@ status_t search_local_servers_menu(context_t *context, Server *server)
                 (*server).setOccupiedPlayers(t3pResponse.dataList.front());
             }
             (*context) = READY_TO_CONNECT;
+        }
+    }
+    return STATUS_OK;
+}
+
+status_t search_by_ip_menu(context_t *context, Server *server)
+{
+    status_t status;
+    string ip;
+    bool valid_ip = false;
+    regex ip_checker("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+    T3PResponse t3pResponse;
+
+    system("clear");
+    cout << "SEARCH BY IP MENU" << endl;
+    while (*context = SEARCH_BY_IP)
+    {
+        while (valid_ip == false)
+        {
+            cout << "Please insert the server IP or type \\back to go back to main menu" << endl;
+            getline(cin, ip);
+            if (regex_match(ip, ip_checker))
+                valid_ip == true;
+            else
+            {
+                if (ip.compare("\\back") == 0)
+                {
+                    *context = MAIN_MENU;
+                    return STATUS_OK;
+                }
+                else
+                    cerr << "Error. Wrong IP format." << endl;
+            }
+        }
+
+        if ((status = send_discover(ip, &t3pResponse)) != STATUS_OK)
+        {
+            cerr << "Error getting information from server" << endl;
+        }
+        else
+        {
+            (*server).ip = ip;
+            if (!t3pResponse.dataList.front().empty())
+                (*server).setAvailablePlayers(t3pResponse.dataList.front());
+            t3pResponse.dataList.pop_front();
+            if (!t3pResponse.dataList.front().empty())
+                (*server).setOccupiedPlayers(t3pResponse.dataList.front());
+            *context = READY_TO_CONNECT;
         }
     }
     return STATUS_OK;
