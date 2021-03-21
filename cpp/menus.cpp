@@ -7,6 +7,8 @@
 #include "../headers/udp.h"
 
 
+bool scanAgain();
+
 using namespace std;
 
 status_t main_menu(context_t *context)
@@ -57,27 +59,15 @@ status_t search_local_servers_menu(context_t *context, Server *server)
         if ((status = send_discover_broadcast(&t3pResponseList)) != STATUS_OK)
         {
             cerr << "There are no servers available in local network." << endl;
-            cout << "Do you want to scan again?" << endl;
-            valid_choice = false;
-            while (valid_choice == false)
+            if (!scanAgain())
             {
-                cout << "Type Y to scan again or N to go back to main menu" << endl;
-                getline(cin, selection);
-                if (selection.compare("N") == 0)
-                {
-                    valid_choice = true;
-                    *context = MAIN_MENU;
-                    return STATUS_OK;
-                }
-                else if (selection.compare("Y") == 0)
-                    valid_choice = true;
-                else
-                    cerr << "Error. Option invalid." << endl;
-            }
+                *context = MAIN_MENU;
+                return STATUS_OK;
+            }    
         }
         else 
         {
-            regex ip_checker("\\A(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\z");
+            regex ip_checker("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
             for(auto const& t3pResponseItem : t3pResponseList) 
             {
                 string ip = t3pResponseItem.dataList.front();
@@ -87,45 +77,54 @@ status_t search_local_servers_menu(context_t *context, Server *server)
                     serverList.push_back(tempServer);
                 }               
             }
-            
-            cout << "Found " << serverList.size() << " servers." << endl; 
-            int i = 0;
-            for(auto const& serverItem : serverList)
-            {
-                cout << i << " - " << serverItem.ip << endl;
-            }
 
-            valid_choice = false;
-            while (valid_choice == false)
+            if (serverList.empty())
             {
-                cout << "Please select a server number or type '\\back' to go back to main menu" << endl;
-                getline(cin, selection);
-                if (selection.compare("\\back") == 0)
+                cerr << "There servers in local network, but they are not responding correctly." << endl;
+                if (!scanAgain())
                 {
-                    valid_choice = true;
                     *context = MAIN_MENU;
                     return STATUS_OK;
-                }
-                else 
+                }    
+            }
+            else
+            {
+                cout << "Found " << serverList.size() << " servers." << endl; 
+                int i = 0;
+                for(auto const& serverItem : serverList)
                 {
-                    if (stoi(selection) > (serverList.size()-1))
+                    cout << (i+1) << " - " << serverItem.ip << endl;
+                }
+                    
+
+                valid_choice = false;
+                while (valid_choice == false)
+                {
+                    cout << "Please select a server number or type '\\back' to go back to main menu" << endl;
+                    getline(cin, selection);
+                    if (selection.compare("\\back") == 0)
                     {
-                        cerr << "Error. That server number is not an option." << endl;
+                        *context = MAIN_MENU;
+                        return STATUS_OK;
                     }
-                    else
+                    else 
                     {
-                        valid_choice = true;
-                        int i = 0;
-                        list<Server> :: iterator it3 = serverList.begin();
-                        for(auto const& serverItem : serverList)
+                        if (stoi(selection) > (serverList.size()))
+                            cerr << "Error. That server number is not an option." << endl;
+                        else
                         {
-                            if (i == stoi(selection))
+                            valid_choice = true;
+                            int i = 0;
+                            for(auto const& serverItem : serverList)
                             {
-                                (*server).ip = serverItem.ip;
-                            }
-                            i++;
-                        }                           
-                    }                                        
+                                if (i == (stoi(selection)-1))
+                                {
+                                    (*server).ip = serverItem.ip;
+                                }
+                                i++;
+                            }                           
+                        }                                        
+                    }
                 }
             }
         }
@@ -139,9 +138,9 @@ status_t search_local_servers_menu(context_t *context, Server *server)
             if (!t3pResponse.dataList.front().empty())
             {
                 (*server).setAvailablePlayers(t3pResponse.dataList.front());
-                t3pResponse.dataList.pop_front();
             }
-            if (! t3pResponse.dataList.front().empty())
+            t3pResponse.dataList.pop_front();
+            if (!t3pResponse.dataList.front().empty())
             {
                 (*server).setOccupiedPlayers(t3pResponse.dataList.front());
             }
@@ -149,4 +148,21 @@ status_t search_local_servers_menu(context_t *context, Server *server)
         }
     }
     return STATUS_OK;
+}
+
+bool scanAgain()
+{
+    string selection;
+    cout << "Do you want to scan again?" << endl;
+    while (1)
+    {
+        cout << "Type Y to scan again or N to go back to main menu" << endl;
+        getline(cin, selection);
+        if (selection.compare("N") == 0)
+            return false;
+        else if (selection.compare("Y") == 0)
+            return true;
+        else
+            cerr << "Error. Option invalid." << endl;
+    }
 }

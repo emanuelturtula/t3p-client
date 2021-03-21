@@ -66,18 +66,7 @@ int main()
             {
                 cout << "\nReceived DISCOVERBROADCAST." << endl;
                 
-                n = sendto(sock, cstr1, strlen(cstr1), 0, (struct sockaddr *)&from, fromlen);
-                if (n < 0) 
-                    error("sendto");
                 n = sendto(sock, cstr2, strlen(cstr2), 0, (struct sockaddr *)&from, fromlen);
-                if (n < 0) 
-                    error("sendto");
-            }
-            else if (strcmp(buf, "DISCOVER|127.0.0.1 \r\n \r\n") == 0)
-            {
-                cout << "\nReceived DISCOVER." << endl;
-                
-                n = sendto(sock, cstr3, strlen(cstr3), 0, (struct sockaddr *)&from, fromlen);
                 if (n < 0) 
                     error("sendto");
             }

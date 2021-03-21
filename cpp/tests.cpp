@@ -21,9 +21,9 @@ status_t run_test_udp()
     status_t status;
     list<T3PResponse> t3pResponseList;
     T3PResponse t3pResponse;
-    string ip = "172.23.134.149";
-    if ((status = send_discover_broadcast(&t3pResponseList)) != STATUS_OK)
-        return status;
+    string ip = "192.168.0.40";
+    // if ((status = send_discover_broadcast(&t3pResponseList)) != STATUS_OK)
+    //     return status;
     if ((status = send_discover(ip, &t3pResponse)) != STATUS_OK)
         return status;
     return status;
