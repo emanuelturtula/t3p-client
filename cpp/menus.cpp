@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-
+#include <regex>
 #include <stdlib.h>
 #include "../headers/types.h"
 #include "../headers/menus.h"
@@ -11,6 +11,9 @@ using namespace std;
 
 status_t main_menu(context_t *context)
 {
+    /**
+     * 
+     */
     string selection;
     *context = MAIN_MENU;
     while ((*context) == MAIN_MENU)
@@ -35,6 +38,9 @@ status_t main_menu(context_t *context)
 
 status_t search_local_servers_menu(context_t *context, Server *server)
 {
+    /**
+     * 
+     */
     list<T3PResponse> t3pResponseList;
     list<Server> serverList;
     T3PResponse t3pResponse;
@@ -71,22 +77,22 @@ status_t search_local_servers_menu(context_t *context, Server *server)
         }
         else 
         {
-            list<T3PResponse> :: iterator it1 = t3pResponseList.begin();
-            for(it1; it1 != t3pResponseList.end(); ++it1)
+            regex ip_checker("\\A(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\z");
+            for(auto const& t3pResponseItem : t3pResponseList) 
             {
-                string ip = it1->dataList.front();
-                // TODO: ADD IP CHECKING
-                Server tempServer(ip);
-                serverList.push_back(tempServer);
+                string ip = t3pResponseItem.dataList.front();
+                if (regex_match(ip, ip_checker))
+                {
+                    Server tempServer(ip);
+                    serverList.push_back(tempServer);
+                }               
             }
-            
             
             cout << "Found " << serverList.size() << " servers." << endl; 
             int i = 0;
-            list<Server> :: iterator it2 = serverList.begin();
-            for(it2, i; it2 != serverList.end(); ++it2, ++i)
+            for(auto const& serverItem : serverList)
             {
-                cout << i << " - " << it2->ip << endl;
+                cout << i << " - " << serverItem.ip << endl;
             }
 
             valid_choice = false;
@@ -111,19 +117,26 @@ status_t search_local_servers_menu(context_t *context, Server *server)
                         valid_choice = true;
                         int i = 0;
                         list<Server> :: iterator it3 = serverList.begin();
-                        for(it3; i < stoi(selection); i++)
-                            it3++;
-                        (*server).ip = it3->ip;
+                        for(auto const& serverItem : serverList)
+                        {
+                            if (i == stoi(selection))
+                            {
+                                (*server).ip = serverItem.ip;
+                            }
+                            i++;
+                        }                           
                     }                                        
                 }
             }
         }
 
         if ((status = send_discover((*server).ip, &t3pResponse)) != STATUS_OK)
-        {}
+        {
+            // DO STH
+        }
         else
         {
-            if (! t3pResponse.dataList.front().empty())
+            if (!t3pResponse.dataList.front().empty())
             {
                 (*server).setAvailablePlayers(t3pResponse.dataList.front());
                 t3pResponse.dataList.pop_front();
