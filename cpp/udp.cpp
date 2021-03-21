@@ -65,7 +65,7 @@ status_t send_discover_broadcast(list<T3PResponse> *t3pResponseList)
     return STATUS_OK;
 }
 
-status_t send_discover(string ip, T3PResponse *t3pResponseObj)
+status_t send_discover(string ip, T3PResponse *t3pResponse)
 {
     // Define variables
     int sockfd;
@@ -104,7 +104,7 @@ status_t send_discover(string ip, T3PResponse *t3pResponseObj)
     if (t3pResponseList.empty())
         return ERROR_NO_SERVERS_ONLINE;
     
-    *t3pResponseObj = t3pResponseList.front();
+    *t3pResponse = t3pResponseList.front();
     
     return STATUS_OK;
 }

@@ -18,13 +18,17 @@ enum status_t {
 enum context_t {
     MAIN_MENU,
     SEARCH_BY_IP,
-    SEARCH_LOCAL_SERVERS
+    SEARCH_LOCAL_SERVERS,
+    READY_TO_CONNECT
 };
 
 class Server {
     public:
         Server();
+        Server(string new_ip);
         string ip;
+        void setAvailablePlayers(string available_players);
+        void setOccupiedPlayers(string occupied_players);
         list<string> playersAvailable;
         list<string> playersOccupied;
 };
