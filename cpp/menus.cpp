@@ -49,7 +49,8 @@ status_t search_local_servers_menu(context_t *context, Server *server)
     status_t status;
     string selection;
     bool valid_choice = false;
-    
+    regex ip_checker("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+
     while (*context != READY_TO_CONNECT)
     {
         t3pResponseList.clear();
@@ -68,7 +69,6 @@ status_t search_local_servers_menu(context_t *context, Server *server)
         }
         else 
         {
-            regex ip_checker("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
             for(auto const& t3pResponseItem : t3pResponseList) 
             {
                 string ip = t3pResponseItem.dataList.front();
@@ -131,9 +131,7 @@ status_t search_local_servers_menu(context_t *context, Server *server)
         }
 
         if ((status = send_discover((*server).ip, &t3pResponse)) != STATUS_OK)
-        {
-            // DO STH
-        }
+            cerr << "Error getting information from server" << endl;
         else
         {
             if (!t3pResponse.dataList.front().empty())
@@ -154,22 +152,22 @@ status_t search_local_servers_menu(context_t *context, Server *server)
 status_t search_by_ip_menu(context_t *context, Server *server)
 {
     status_t status;
-    string ip;
-    bool valid_ip = false;
+    bool valid_ip;
     regex ip_checker("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
     T3PResponse t3pResponse;
 
     system("clear");
     cout << "SEARCH BY IP MENU" << endl;
-    while (*context = SEARCH_BY_IP)
+    while (*context == SEARCH_BY_IP)
     {
+        string ip;
+        valid_ip = false;
         while (valid_ip == false)
         {
             cout << "Please insert the server IP or type \\back to go back to main menu" << endl;
             getline(cin, ip);
-            if (regex_match(ip, ip_checker))
-                valid_ip == true;
-            else
+            valid_ip = regex_match(ip, ip_checker);
+            if (!valid_ip)
             {
                 if (ip.compare("\\back") == 0)
                 {
@@ -182,9 +180,7 @@ status_t search_by_ip_menu(context_t *context, Server *server)
         }
 
         if ((status = send_discover(ip, &t3pResponse)) != STATUS_OK)
-        {
             cerr << "Error getting information from server" << endl;
-        }
         else
         {
             (*server).ip = ip;
