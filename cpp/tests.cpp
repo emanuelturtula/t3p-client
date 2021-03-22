@@ -38,8 +38,16 @@ status_t run_test_menus()
     //     return status;
     // if ((status = search_local_servers_menu(&context, &testServer)) != STATUS_OK)
     //     return status;
-    context = SEARCH_BY_IP;
-    if ((status = search_by_ip_menu(&context, &testServer)) != STATUS_OK)
-        return status;
+    // context = SEARCH_BY_IP;
+    // if ((status = search_by_ip_menu(&context, &testServer)) != STATUS_OK)
+    //     return status;
+    context = READY_TO_CONNECT;
+    testServer.ip = "192.168.0.40";
+    testServer.playersAvailable.push_back("edturtu");
+    testServer.playersAvailable.push_back("gferrari");
+    testServer.playersOccupied.push_back("nico");
+    testServer.playersOccupied.push_back("pepe");
+    if ((status = connect_menu(&context, testServer)) != STATUS_OK)
+         return status;
     return status;
 }

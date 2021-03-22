@@ -19,7 +19,8 @@ enum context_t {
     MAIN_MENU,
     SEARCH_BY_IP,
     SEARCH_LOCAL_SERVERS,
-    READY_TO_CONNECT
+    READY_TO_CONNECT,
+    CONNECT
 };
 
 class Server {
