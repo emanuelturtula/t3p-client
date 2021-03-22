@@ -5,6 +5,6 @@
 #include <string>
 #include "../headers/udp.h"
 
-#define DEBUG_MENUS
+#define DEBUG_UDP
 
 status_t run_tests();

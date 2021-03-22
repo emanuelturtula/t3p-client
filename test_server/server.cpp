@@ -35,8 +35,9 @@ int main()
     char buf[1024];
 
     const char * cstr1 = "200|OK|127.0.0.1 \r\n \r\n";
-    const char * cstr2 = "200|OK|192.1.1.2 \r\n \r\n";
+    const char * cstr2 = "200|OK|172.23.134.149 \r\n \r\n";
     const char * cstr3 = "200|OK|edturtu|grizz \r\ngferrari|nico \r\n \r\n";
+    const char * cstr4 = "200|OK|edturtu|grizz \r\n \r\n \r\n";
     sock=socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) 
         error("Opening socket");
@@ -53,9 +54,9 @@ int main()
 
     fromlen = sizeof(struct sockaddr_in);
     printf("Waiting for message... \n\n");
-    memset(buf, 0, strlen(buf));
     while (1) 
     {
+        memset(buf, 0, strlen(buf));
         n = recvfrom(sock, buf, 1024, 0, (struct sockaddr *)&from, &fromlen);
         if (n < 0) 
             error("recvfrom");
@@ -65,22 +66,18 @@ int main()
             {
                 cout << "\nReceived DISCOVERBROADCAST." << endl;
                 
-                n = sendto(sock, cstr1, strlen(cstr1), 0, (struct sockaddr *)&from, fromlen);
-                if (n < 0) 
-                    error("sendto");
                 n = sendto(sock, cstr2, strlen(cstr2), 0, (struct sockaddr *)&from, fromlen);
                 if (n < 0) 
                     error("sendto");
             }
-            else if (strcmp(buf, "DISCOVER|127.0.0.1 \r\n \r\n") == 0)
+            else if (strcmp(buf, "DISCOVER|172.23.134.149 \r\n \r\n") == 0)
             {
                 cout << "\nReceived DISCOVER." << endl;
                 
-                n = sendto(sock, cstr3, strlen(cstr3), 0, (struct sockaddr *)&from, fromlen);
+                n = sendto(sock, cstr4, strlen(cstr4), 0, (struct sockaddr *)&from, fromlen);
                 if (n < 0) 
                     error("sendto");
             }
         }
-        memset(buf, 0, strlen(buf));
    }
 }

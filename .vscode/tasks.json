@@ -5,13 +5,32 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "Build udp functions",
+            "label": "Build client",
             "command": "/bin/g++",
             "args": [
                 "-g",
                 "${workspaceFolder}/cpp/*.cpp",
                 "-o",
-                "${workspaceFolder}/debug/debug_udp.out"
+                "${workspaceFolder}/debug/debug_client.out"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": "build",
+            "detail": "compiler: /bin/g++"
+        },
+        {
+            "type": "cppbuild",
+            "label": "Build server",
+            "command": "/bin/g++",
+            "args": [
+                "-g",
+                "${workspaceFolder}/test_server/*.cpp",
+                "-o",
+                "${workspaceFolder}/debug/debug_server.out"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
