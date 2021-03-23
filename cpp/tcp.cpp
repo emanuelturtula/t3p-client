@@ -6,6 +6,7 @@
 #include <string.h>
 #include <list>
 #include <mutex>
+#include <regex>
 #include "../headers/tcp.h"
 #include "../headers/types.h"
 
@@ -74,6 +75,35 @@ status_t logout(int *sockfd)
 
     connected = false;
     close(*sockfd);
+    return STATUS_OK;
+}
+
+status_t invite(int sockfd, string player_name)
+{
+    T3PResponse t3pResponse;
+    const char *c_player_name = player_name.c_str();
+    char message[BUFFER_SIZE];
+    regex playerNameChecker("^[a-zA-Z]+$");
+
+    // check if player's name is ok. Length must be between 3 and 20 chars, and it has to be alpha
+    if (player_name.size() < 3 || player_name.size() > 20)
+        return ERROR_BAD_PLAYER_NAME;
+    if (!regex_match(player_name, playerNameChecker))
+        return ERROR_BAD_PLAYER_NAME;
+
+    // format string
+    sprintf(message, "INVITE|%s \r\n \r\n", c_player_name);
+
+    // send invite
+    if (send_tcp_message(sockfd, message) != STATUS_OK)
+        return ERROR_SENDING_MESSAGE;
+
+    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
+        return ERROR_RECEIVING_MESSAGE;
+
+    if (t3pResponse.statusMessage != "OK")
+        return ERROR_STATUS_MESSAGE;
+
     return STATUS_OK;
 }
 
