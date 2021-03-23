@@ -195,6 +195,43 @@ status_t search_by_ip_menu(context_t *context, Server *server)
     return STATUS_OK;
 }
 
+status_t connect_menu(context_t *context, Server server)
+{
+    bool valid_choice;
+    string choice;
+    system("clear");
+    cout << "CONNECT MENU" << endl;
+    while (*context == READY_TO_CONNECT)
+    {
+        cout << "Server " << server.ip << endl;
+        cout << "Players available:" << endl;;
+        for (auto const& player : server.playersAvailable)
+            cout << player << endl;
+        cout << "Players occupied:" << endl;
+        for (auto const& player : server.playersOccupied)
+            cout << player << endl;
+        valid_choice = false;
+        while (valid_choice == false)
+        {
+            cout << "Type Y to connect or N to go back to main menu" << endl;
+            getline(cin, choice);
+            if (choice.compare("Y") == 0)
+            {
+                valid_choice = true;
+                *context = CONNECT;
+            }
+            else if (choice.compare("N") == 0)
+            {
+                valid_choice = true;
+                *context = MAIN_MENU;
+            }
+            else 
+                cerr << "Error. Wrong answer." << endl;
+        }
+    }
+    return STATUS_OK;
+}
+
 bool scanAgain()
 {
     string selection;
