@@ -1,8 +1,11 @@
 #include "../headers/tests.h"
 #include "../headers/types.h"
-#include "../headers/menus.h" 
+#include "../headers/menus.h"
+#include "../headers/udp.h"
+#include "../headers/tcp.h"
 
 status_t run_test_udp();
+status_t run_test_tcp();
 status_t run_test_menus();
 
 
@@ -13,6 +16,9 @@ status_t run_tests()
     #endif
     #ifdef DEBUG_MENUS
         return run_test_menus();
+    #endif
+    #ifdef DEBUG_TCP
+        return run_test_tcp();
     #endif
 }
 
@@ -50,4 +56,16 @@ status_t run_test_menus()
     if ((status = connect_menu(&context, testServer)) != STATUS_OK)
          return status;
     return status;
+}
+
+status_t run_test_tcp()
+{
+    status_t status;
+    Server testServer;
+    int sockfd;
+    string player_name = "edturtu";
+    testServer.ip = "127.0.0.1";
+    if ((status = login(&sockfd, player_name, testServer.ip)) != STATUS_OK)
+        return status;
+    return STATUS_OK;
 }

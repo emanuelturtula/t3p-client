@@ -2,6 +2,11 @@
     "files.associations": {
         "*.tcc": "cpp",
         "iostream": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "functional": "cpp",
+        "istream": "cpp",
+        "utility": "cpp",
+        "fstream": "cpp",
+        "thread": "cpp"
     }
 }

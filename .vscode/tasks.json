@@ -29,6 +29,7 @@
             "args": [
                 "-g",
                 "${workspaceFolder}/test_server/*.cpp",
+                "-pthread",
                 "-o",
                 "${workspaceFolder}/debug/debug_server.out"
             ],
