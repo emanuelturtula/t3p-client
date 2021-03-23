@@ -59,6 +59,24 @@ status_t login(Server server, string player_name, int *sockfd)
     return STATUS_OK;
 }
 
+status_t logout(int *sockfd)
+{
+    T3PResponse t3pResponse;
+    const char *message = "LOGOUT \r\n \r\n";
+    if (send_tcp_message(*sockfd, message) != STATUS_OK)
+        return ERROR_SENDING_MESSAGE;
+
+    if (receive_tcp_message(*sockfd, &t3pResponse) != STATUS_OK)
+        return ERROR_RECEIVING_MESSAGE;
+
+    if (t3pResponse.statusMessage != "OK")
+        return ERROR_STATUS_MESSAGE;
+
+    connected = false;
+    close(*sockfd);
+    return STATUS_OK;
+}
+
 void heartbeat_thread(int sockfd)
 {
     const char *message = "HEARTBEAT \r\n \r\n";
