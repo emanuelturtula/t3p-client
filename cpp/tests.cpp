@@ -74,7 +74,9 @@ status_t run_test_tcp()
     // if ((status = logout(&sockfd)) != STATUS_OK)
     //     return status;
     // heartbeat_thd.join();
-    if ((status = invite(sockfd, "edturtu")) != STATUS_OK)
+    // if ((status = invite(sockfd, "edturtu")) != STATUS_OK)
+    //      return status;
+    if ((status = random_invite(sockfd)) != STATUS_OK)
          return status;
     return STATUS_OK;
 }
