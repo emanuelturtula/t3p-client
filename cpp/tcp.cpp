@@ -64,8 +64,7 @@ void heartbeat_thread(int sockfd)
     const char *message = "HEARTBEAT \r\n \r\n";
     while (connected == true)
     {
-        if (send_tcp_message(sockfd, message) != STATUS_OK)
-            return ERROR_SENDING_HEARTBEAT;
+        send_tcp_message(sockfd, message);
         sleep(2);
     }   
 }
