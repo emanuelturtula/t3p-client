@@ -10,6 +10,7 @@
             "args": [
                 "-g",
                 "${workspaceFolder}/cpp/*.cpp",
+                "-pthread",
                 "-o",
                 "${workspaceFolder}/debug/debug_client.out"
             ],

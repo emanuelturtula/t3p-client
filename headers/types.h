@@ -14,7 +14,8 @@ enum status_t {
     ERROR_NO_SERVERS_ONLINE,
     ERROR_BAD_MESSAGE_FORMAT,
     ERROR_CONNECTING,
-    ERROR_LOGIN
+    ERROR_LOGIN,
+    ERROR_SENDING_HEARTBEAT
 };
 
 enum context_t {

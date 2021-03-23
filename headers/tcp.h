@@ -9,3 +9,4 @@
 using namespace std;
 
 status_t login(Server server, string player_name, int *sockfd);
+void heartbeat_thread(int sockfd);

@@ -3,6 +3,7 @@
 #include "../headers/menus.h"
 #include "../headers/udp.h"
 #include "../headers/tcp.h"
+#include <thread>
 
 using namespace std;
 
@@ -69,5 +70,7 @@ status_t run_test_tcp()
     testServer.ip = "127.0.0.1";
     if ((status = login(testServer, player_name, &sockfd)) != STATUS_OK)
         return status;
+    thread heartbeat_thd(heartbeat_thread, sockfd);
+    heartbeat_thd.join();
     return STATUS_OK;
 }
