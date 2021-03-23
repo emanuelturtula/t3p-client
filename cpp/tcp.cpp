@@ -48,6 +48,8 @@ status_t login(Server server, string player_name, int *sockfd)
         return ERROR_RECEIVING_MESSAGE;
     }
 
+    if (t3pResponse.statusMessage != "OK")
+        return ERROR_LOGIN;
 
     return STATUS_OK;
 }
@@ -61,8 +63,9 @@ status_t send_tcp_message(int sockfd, char *message)
 
 status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse)
 {
-    char response[1024];
-    int bytes = recv(sockfd, response, strlen(response), 0);
+    char response[BUFFER_SIZE];
+    memset(response, 0, strlen(response));
+    int bytes = read(sockfd, response, sizeof(response));
     if (bytes < 0)
         return ERROR_RECEIVING_MESSAGE;
     if (parse_tcp_message(string(response), t3pResponse) != STATUS_OK)

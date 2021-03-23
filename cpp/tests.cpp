@@ -4,6 +4,8 @@
 #include "../headers/udp.h"
 #include "../headers/tcp.h"
 
+using namespace std;
+
 status_t run_test_udp();
 status_t run_test_tcp();
 status_t run_test_menus();
@@ -65,7 +67,7 @@ status_t run_test_tcp()
     int sockfd;
     string player_name = "edturtu";
     testServer.ip = "127.0.0.1";
-    if ((status = login(&sockfd, player_name, testServer.ip)) != STATUS_OK)
+    if ((status = login(testServer, player_name, &sockfd)) != STATUS_OK)
         return status;
     return STATUS_OK;
 }
