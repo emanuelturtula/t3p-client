@@ -248,3 +248,37 @@ bool scanAgain()
             cerr << "Error. Option invalid." << endl;
     }
 }
+
+
+status_t lobby_menu(context_t *context)
+{
+    /**
+     * 
+     */
+    string selection;
+    *context = LOBBY_MENU;
+    while ((*context) == LOBBY_MENU)
+    {
+        cout << "TicTacToe LOBBY" << endl;
+        cout << "Please select one option" << endl;
+        cout << "1 - Invite a Player" << endl;
+        cout << "2 - Random Match" << endl;
+        cout << "3 - List of available players" << endl;
+        cout << "4 - Logout" << endl;
+        getline(cin, selection);
+        if (selection.compare("1") == 0)
+            (*context) = SEND_INVITE;
+        else if (selection.compare("2") == 0)
+            (*context) = SEND_RANDOMINVITE;
+        else if (selection.compare("3") == 0)
+            (*context) = SEARCH_PLAYERS;        
+        else if (selection.compare("4") == 0)
+            (*context) = LOGOUT;                    
+        else 
+        {
+            system("clear");
+            cerr << "Error. Not an option" << endl << endl;
+        }
+    }
+    return STATUS_OK;
+}
