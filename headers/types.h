@@ -18,10 +18,15 @@ enum status_t {
 
 enum context_t {
     MAIN_MENU,
+    LOBBY_MENU,
     SEARCH_BY_IP,
     SEARCH_LOCAL_SERVERS,
     READY_TO_CONNECT,
-    CONNECT
+    CONNECT,
+    SEND_INVITE,
+    SEND_RANDOMINVITE,
+    SEARCH_PLAYERS,
+    LOGOUT
 };
 
 class Server {
