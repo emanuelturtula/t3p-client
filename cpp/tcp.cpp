@@ -188,3 +188,27 @@ status_t parse_tcp_message(string response, T3PResponse *t3pResponse)
 
     return STATUS_OK;
 }
+
+/*need to check if the player is in the correct context first
+If the function return STATUS_OK we should change the context so the 
+player would leave the game*/
+status_t giveup(int sockfd)
+{
+    T3PResponse t3pResponse;
+    char message[BUFFER_SIZE];
+
+    // format string
+    sprintf(message, "GIVEUP \r\n \r\n");
+
+    // send giveup
+    if (send_tcp_message(sockfd, message) != STATUS_OK)
+        return ERROR_SENDING_MESSAGE;
+
+    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
+        return ERROR_RECEIVING_MESSAGE;
+
+    if (t3pResponse.statusMessage != "OK")
+        return ERROR_STATUS_MESSAGE;
+
+    return STATUS_OK;
+}
