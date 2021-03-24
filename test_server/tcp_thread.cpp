@@ -6,6 +6,7 @@ int respond(int connfd, string buffer);
 
 void tcp_thread()
 {
+    bool connected = false;
     int sockfd;
     int connfd;
     int response;
@@ -31,44 +32,44 @@ void tcp_thread()
         return;
     }
 
-    if ((listen(sockfd, 5)) != 0)
+    while (1)
     {
-        close(sockfd);
-        write_stderr("TCP THREAD - LISTENING FAILED");
-        return;
-    }
+        connected = false;
+        if ((listen(sockfd, 5)) != 0)
+        {
+            close(sockfd);
+            write_stderr("TCP THREAD - LISTENING FAILED");
+            return;
+        }
 
-    write_stdout("TCP THREAD - LISTENING");
+        write_stdout("TCP THREAD - LISTENING");
 
-    if ((connfd = accept(sockfd, (struct sockaddr *)&client, &len)) < 0)
-    {
-        close(sockfd);
-        write_stdout("TCP THREAD - ACCEPTING CONNECTION FAILED");
-        return;
+        if ((connfd = accept(sockfd, (struct sockaddr *)&client, &len)) < 0)
+        {
+            close(sockfd);
+            write_stdout("TCP THREAD - ACCEPTING CONNECTION FAILED");
+            return;
+        }
+        
+        connected = true;
+        write_stdout("TCP THREAD - CONNECTION SUCCESSFUL");
+
+        while(connected == true)
+        {
+            memset(buffer, 0, strlen(buffer));
+            if (read(connfd, buffer, sizeof(buffer)) < 0)
+                write_stderr("TCP THREAD - ERROR READING MESSAGE");
+            if ((response = respond(connfd, string(buffer))) < 0)
+                write_stderr("TCP THREAD - ERROR RESPONDING");
+            else if (response == 1)
+            {
+                close(connfd);
+                write_stdout("TCP THREAD - CLOSING CONNECTION");
+                connected = false;
+            }    
+        }
     }
     
-    write_stdout("TCP THREAD - CONNECTION SUCCESSFUL");
-
-    while(1)
-    {
-        memset(buffer, 0, strlen(buffer));
-        if (read(connfd, buffer, sizeof(buffer)) < 0)
-        {
-            close(connfd);
-            close(sockfd);
-            write_stderr("TCP THREAD - ERROR READING MESSAGE");
-            return;
-        }
-        if ((response = respond(connfd, string(buffer))) < 0)
-        {
-            close(connfd);
-            close(sockfd);
-            write_stderr("TCP THREAD - ERROR RESPONDING");
-            return;
-        }
-        else if (response == 1)
-            return;
-    }
 }
 
 int respond(int connfd, string buffer)
@@ -93,6 +94,7 @@ int respond(int connfd, string buffer)
     else 
     {
         write_stderr("TCP THREAD - Unrecognized command.");
+        return 1;
     }
     return 0;
 }

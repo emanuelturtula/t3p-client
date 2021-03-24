@@ -71,6 +71,8 @@ status_t run_test_tcp()
     if ((status = login(testServer, player_name, &sockfd)) != STATUS_OK)
         return status;
     thread heartbeat_thd(heartbeat_thread, sockfd);
+    if ((status = logout(&sockfd)) != STATUS_OK)
+        return status;
     heartbeat_thd.join();
     return STATUS_OK;
 }
