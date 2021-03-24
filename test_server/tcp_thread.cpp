@@ -80,13 +80,13 @@ int respond(int connfd, string buffer)
     else if (buffer == "LOGIN|edturtu \r\n \r\n")
     {
         write_stdout("TCP THREAD - Received LOGIN.");
-        if (write(connfd, login_response, sizeof(login_response)) < 0)
+        if (write(connfd, login_response, strlen(login_response)) < 0)
             return -1;
     }
     else if (buffer == "LOGOUT \r\n \r\n")
     {
         write_stdout("TCP THREAD - Received LOGOUT.");
-        if (write(connfd, logout_response, sizeof(logout_response)) < 0)
+        if (write(connfd, logout_response, strlen(logout_response)) < 0)
             return -1;
         return 1;
     }

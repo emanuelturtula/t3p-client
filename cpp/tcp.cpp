@@ -5,12 +5,16 @@
 #include <string>
 #include <string.h>
 #include <list>
+#include <mutex>
 #include "../headers/tcp.h"
 #include "../headers/types.h"
 
+mutex msend;
+bool connected = false;
+
 using namespace std;
 
-status_t send_tcp_message(int sockfd, char *message);
+status_t send_tcp_message(int sockfd, const char *message);
 status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse);
 status_t parse_tcp_message(string response, T3PResponse *t3pResponse);
 
@@ -48,12 +52,32 @@ status_t login(Server server, string player_name, int *sockfd)
         return ERROR_RECEIVING_MESSAGE;
     }
 
+    if (t3pResponse.statusMessage != "OK")
+        return ERROR_LOGIN;
 
+    connected = true;
     return STATUS_OK;
 }
 
-status_t send_tcp_message(int sockfd, char *message)
+void heartbeat_thread(int sockfd)
 {
+    const char *message = "HEARTBEAT \r\n \r\n";
+    while (connected == true)
+    {
+        send_tcp_message(sockfd, message);
+        sleep(2);
+    }   
+}
+
+
+/**
+ * Internal functions
+ * */
+
+//Sends a message to a connected socket.
+status_t send_tcp_message(int sockfd, const char *message)
+{
+    lock_guard<mutex> guard(msend);
     if (send(sockfd, message, strlen(message), 0) < 0)
         return ERROR_SENDING_MESSAGE;
     return STATUS_OK;
@@ -61,8 +85,9 @@ status_t send_tcp_message(int sockfd, char *message)
 
 status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse)
 {
-    char response[1024];
-    int bytes = recv(sockfd, response, strlen(response), 0);
+    char response[BUFFER_SIZE];
+    memset(response, 0, strlen(response));
+    int bytes = read(sockfd, response, sizeof(response));
     if (bytes < 0)
         return ERROR_RECEIVING_MESSAGE;
     if (parse_tcp_message(string(response), t3pResponse) != STATUS_OK)
