@@ -94,6 +94,7 @@ int respond(int connfd, string buffer)
     else 
     {
         write_stderr("TCP THREAD - Unrecognized command.");
+        write_stdout("TCP THREAD - COMMAND RECEIVED: " + buffer);
         return 1;
     }
     return 0;

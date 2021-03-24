@@ -10,4 +10,6 @@ using namespace std;
 
 status_t login(Server server, string player_name, int *sockfd);
 status_t logout(int *sockfd);
+status_t invite(int sockfd, string player_name);
+status_t random_invite(int sockfd);
 void heartbeat_thread(int sockfd);

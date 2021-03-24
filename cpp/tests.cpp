@@ -70,9 +70,13 @@ status_t run_test_tcp()
     testServer.ip = "127.0.0.1";
     if ((status = login(testServer, player_name, &sockfd)) != STATUS_OK)
         return status;
-    thread heartbeat_thd(heartbeat_thread, sockfd);
-    if ((status = logout(&sockfd)) != STATUS_OK)
-        return status;
-    heartbeat_thd.join();
+    // thread heartbeat_thd(heartbeat_thread, sockfd);
+    // if ((status = logout(&sockfd)) != STATUS_OK)
+    //     return status;
+    // heartbeat_thd.join();
+    // if ((status = invite(sockfd, "edturtu")) != STATUS_OK)
+    //      return status;
+    if ((status = random_invite(sockfd)) != STATUS_OK)
+         return status;
     return STATUS_OK;
 }
