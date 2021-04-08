@@ -198,7 +198,7 @@ status_t giveup(int sockfd)
     char message[BUFFER_SIZE];
 
     // format string
-    sprintf(message, "GIVEUP \r\n \r\n");
+    const char* message = "GIVEUP \r\n \r\n";
 
     // send giveup
     if (send_tcp_message(sockfd, message) != STATUS_OK)
