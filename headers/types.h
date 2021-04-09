@@ -16,7 +16,8 @@ enum status_t {
     ERROR_CONNECTING,
     ERROR_LOGIN,
     ERROR_STATUS_MESSAGE,
-    ERROR_BAD_PLAYER_NAME
+    ERROR_BAD_PLAYER_NAME,
+    ERROR_OUT_OF_CONTEXT
 };
 
 enum context_t {
@@ -29,7 +30,8 @@ enum context_t {
     SEND_INVITE,
     SEND_RANDOMINVITE,
     SEARCH_PLAYERS,
-    LOGOUT
+    LOGOUT,
+    IN_A_GAME
 };
 
 class Server {
