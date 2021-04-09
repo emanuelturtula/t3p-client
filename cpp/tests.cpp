@@ -68,15 +68,23 @@ status_t run_test_tcp()
     int sockfd;
     string player_name = "edturtu";
     testServer.ip = "127.0.0.1";
+    bool accept = false;
     if ((status = login(testServer, player_name, &sockfd)) != STATUS_OK)
         return status;
     // thread heartbeat_thd(heartbeat_thread, sockfd);
     // if ((status = logout(&sockfd)) != STATUS_OK)
     //     return status;
     // heartbeat_thd.join();
-    // if ((status = invite(sockfd, "edturtu")) != STATUS_OK)
-    //      return status;
+    if ((status = invite(sockfd, "edturtu")) != STATUS_OK)
+        return status;
+    accept = false; 
+    if ((status = wait_invitation_response(sockfd, &accept)) != STATUS_OK)
+        return status;  
+     
     if ((status = random_invite(sockfd)) != STATUS_OK)
-         return status;
+        return status;
+    accept = false;
+    if ((status = wait_invitation_response(sockfd, &accept)) != STATUS_OK)
+        return status;  
     return STATUS_OK;
 }

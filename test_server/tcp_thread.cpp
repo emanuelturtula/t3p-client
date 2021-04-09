@@ -76,6 +76,10 @@ int respond(int connfd, string buffer)
 {
     const char *login_response = "200|OK \r\n \r\n";
     const char *logout_response = "200|OK \r\n \r\n";
+    const char *invite_response = "200|OK \r\n \r\n";
+    const char *random_invite_response = "200|OK \r\n \r\n";
+    const char *accept_invite_response = "ACCEPT \r\n \r\n";
+    const char *decline_invite_response = "DECLINE \r\n \r\n";
     if (buffer == "HEARTBEAT \r\n \r\n")
         write_stdout("TCP THREAD - Received HEARTBEAT.");
     else if (buffer == "LOGIN|edturtu \r\n \r\n")
@@ -90,6 +94,22 @@ int respond(int connfd, string buffer)
         if (write(connfd, logout_response, strlen(logout_response)) < 0)
             return -1;
         return 1;
+    }
+    else if (buffer == "INVITE|edturtu \r\n \r\n")
+    {
+        write_stdout("TCP THREAD - Received INVITE.");
+        if (write(connfd, invite_response, strlen(invite_response)) < 0)
+            return -1;
+        if (write(connfd, accept_invite_response, strlen(accept_invite_response)) < 0)
+            return -1;
+    }
+    else if (buffer == "RANDOMINVITE \r\n \r\n")
+    {
+        write_stdout("TCP THREAD - Received RANDOMINVITE.");
+        if (write(connfd, random_invite_response, strlen(random_invite_response)) < 0)
+            return -1;
+        if (write(connfd, decline_invite_response, strlen(decline_invite_response)) < 0)
+            return -1;
     }
     else 
     {
