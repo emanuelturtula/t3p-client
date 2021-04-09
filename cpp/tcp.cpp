@@ -93,7 +93,7 @@ status_t invite(int sockfd, string player_name)
 
     // format string
     sprintf(message, "INVITE|%s \r\n \r\n", c_player_name);
-
+    
     // send invite
     if (send_tcp_message(sockfd, message) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
@@ -122,6 +122,29 @@ status_t random_invite(int sockfd)
     
     return STATUS_OK;
 }
+
+status_t wait_invitation_response(int sockfd, bool *accept)
+{
+    char c_response[BUFFER_SIZE];
+    size_t pos;
+    string response;
+    int bytes = read(sockfd, c_response, sizeof(c_response));
+    if (bytes < 0)
+        return ERROR_RECEIVING_MESSAGE;
+    if (response.rfind(" \r\n \r\n") == string :: npos)
+        return ERROR_BAD_MESSAGE_FORMAT;
+    pos = response.find(" \r\n");
+    response = response.substr(0, pos);
+    if (response == "ACCEPT")
+        *accept = true;
+    else if (response == "DECLINE")
+        *accept = false;
+    else
+        return ERROR_BAD_MESSAGE_FORMAT;
+    
+    return STATUS_OK;
+}
+
 
 void heartbeat_thread(int sockfd)
 {
