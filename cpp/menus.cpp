@@ -6,10 +6,9 @@
 #include "../headers/menus.h"
 #include "../headers/udp.h"
 
+using namespace std;
 
 bool scanAgain();
-
-using namespace std;
 
 status_t main_menu(context_t *context)
 {
@@ -232,24 +231,6 @@ status_t connect_menu(context_t *context, Server server)
     return STATUS_OK;
 }
 
-bool scanAgain()
-{
-    string selection;
-    cout << "Do you want to scan again?" << endl;
-    while (1)
-    {
-        cout << "Type Y to scan again or N to go back to main menu" << endl;
-        getline(cin, selection);
-        if (selection.compare("N") == 0)
-            return false;
-        else if (selection.compare("Y") == 0)
-            return true;
-        else
-            cerr << "Error. Option invalid." << endl;
-    }
-}
-
-
 status_t lobby_menu(context_t *context)
 {
     /**
@@ -281,4 +262,21 @@ status_t lobby_menu(context_t *context)
         }
     }
     return STATUS_OK;
+}
+
+bool scanAgain()
+{
+    string selection;
+    cout << "Do you want to scan again?" << endl;
+    while (1)
+    {
+        cout << "Type Y to scan again or N to go back to main menu" << endl;
+        getline(cin, selection);
+        if (selection.compare("N") == 0)
+            return false;
+        else if (selection.compare("Y") == 0)
+            return true;
+        else
+            cerr << "Error. Option invalid." << endl;
+    }
 }
