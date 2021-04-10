@@ -56,7 +56,7 @@ enum context_t {
     SEND_INVITE,
     SEND_RANDOMINVITE,
     SEARCH_PLAYERS,
-    LOGOUT,
+    LOGOUT_CONTEXT,
     IN_A_GAME
 };
 

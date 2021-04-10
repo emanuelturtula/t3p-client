@@ -159,9 +159,20 @@ void heartbeat_thread(int sockfd)
     }   
 }
 
-/* According to variable "response" it sends an ACCEPT or DECLINE command*/
+/* According to variable "response" it sends an ACCEPT or DECLINE command.
+    true = ACCEPT
+    false = DECLINE*/
 status_t invitation_response(int sockfd,bool response){
-    const char message[] = "Gonza Working";
+
+    status_t status;
+    string message;
+
+    if(response == true)
+        message = "ACCEPT \r\n \r\n";
+    else
+        message = "DECLINE \r\n \r\n";
+
+    return send_tcp_message(sockfd, message.c_str()); //returns status_t of function send_tcp_message()
 }
 
 
