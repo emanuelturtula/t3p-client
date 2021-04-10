@@ -23,6 +23,7 @@ status_t run_tests()
     #ifdef DEBUG_TCP
         return run_test_tcp();
     #endif
+    return STATUS_OK;
 }
 
 status_t run_test_udp()
@@ -75,16 +76,33 @@ status_t run_test_tcp()
     // if ((status = logout(&sockfd)) != STATUS_OK)
     //     return status;
     // heartbeat_thd.join();
+    cout << "1. Sending invitation to edturtu = true\n";
     if ((status = invite(sockfd, "edturtu")) != STATUS_OK)
         return status;
-    accept = false; 
+
+
+    cout << "1.2 wait_invitation_response from edturtu\n";
     if ((status = wait_invitation_response(sockfd, &accept)) != STATUS_OK)
         return status;  
-     
+    cout << "1.3 invitation to edturtu result in: " << accept << ". Should be TRUE == 1\n";
+
+
+
+    cout << "3. Sending random_invite\n";
     if ((status = random_invite(sockfd)) != STATUS_OK)
         return status;
-    accept = false;
+
+
+    cout << "3.1 wait_invitation_response from random_invite\n";
     if ((status = wait_invitation_response(sockfd, &accept)) != STATUS_OK)
+        return status;
+    cout << "3.3 random_invite result in: " << accept << ". Should be FALSE\n";
+
+
+    cout << "4. Sending invitation_response = false. (we do not receive answer for this case)\n";
+    if ((status = invitation_response(sockfd, &accept)) != STATUS_OK)
         return status;  
+
+
     return STATUS_OK;
 }

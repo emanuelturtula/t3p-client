@@ -3,14 +3,16 @@
 #include <regex>
 #include <stdlib.h>
 #include <list>
+#include <algorithm>
 #include "../headers/types.h"
 #include "../headers/menus.h"
 #include "../headers/udp.h"
+#include "../headers/tcp.h"
 
 using namespace std;
 
 bool scanAgain();
-bool parse_list_of_players(string players, list<string> *parsedPlayers); 
+bool parse_list_of_players(string players, vector<string> *parsedPlayers); 
 
 status_t main_menu(context_t *context)
 {
@@ -98,7 +100,6 @@ status_t search_local_servers_menu(context_t *context, Server *server)
                     cout << (i+1) << " - " << serverItem.ip << endl;
                 }
                     
-
                 valid_choice = false;
                 while (valid_choice == false)
                 {
@@ -253,7 +254,7 @@ status_t lobby_menu(context_t *context)
         else if (selection.compare("2") == 0)
             (*context) = SEND_RANDOMINVITE_MENU;  
         else if (selection.compare("3") == 0)
-            (*context) = LOGOUT;                    
+            (*context) = LOGOUT_CONTEXT;                    
         else 
         {
             system("clear");
@@ -263,7 +264,7 @@ status_t lobby_menu(context_t *context)
     return STATUS_OK;
 }
 
-status_t invite_menu(context_t *context, Server server) 
+status_t invite_menu(context_t *context, Server server, string myPlayerName, int connectedSockfd) 
 {
     /**
      * 
@@ -272,7 +273,8 @@ status_t invite_menu(context_t *context, Server server)
     status_t status;
     T3PResponse t3pResponse;
     string availablePlayers;
-    list<string> availablePlayersList;
+    string invitePlayerName;
+    vector<string> availablePlayersList;
     *context = SEND_INVITE_MENU;
     while ((*context) == SEND_INVITE_MENU)
     {
@@ -284,34 +286,50 @@ status_t invite_menu(context_t *context, Server server)
         availablePlayers = t3pResponse.dataList.front();   
         if (!parse_list_of_players(availablePlayers, &availablePlayersList))
         {
-            cout << "There are no players avaiable. " << endl;
-            system("pause");
+            cout << "There are no players avaiable. Press any key to go back to Lobby menu" << endl;
+            (*context) = LOBBY_MENU;
+            return STATUS_OK;
         }
         cout << "List of available players: " << endl;
-        int i = 0;
-        for (auto const& player : availablePlayersList)
+        vector<string> :: iterator it = find(availablePlayersList.begin(), availablePlayersList.end(), myPlayerName);
+        availablePlayersList.erase(it);
+
+        if (availablePlayersList.size() > 0)
         {
             cout << "List of available players: " << endl;
-            cout << i << " - " << player << endl; 
-            
+            for (auto const& player : availablePlayersList)
+                cout << player << endl; 
+        }
+        else
+        {
+            cout << "There are no players avaiable. Press any key to go back to Lobby menu" << endl;
+            (*context) = LOBBY_MENU;
+            return STATUS_OK;
         }
 
-
-        cout << "Please enter the player name" << endl;
-        cout << "1 - Invite a Player" << endl;
-        getline(cin, selection);
-        if (selection.compare("1") == 0)
-            (*context) = SEND_INVITE;
-        else if (selection.compare("2") == 0)
-            (*context) = SEND_RANDOMINVITE;
-        else if (selection.compare("3") == 0)
-            (*context) = SEARCH_PLAYERS;        
-        else if (selection.compare("4") == 0)
-            (*context) = LOGOUT;                    
+        cout << "Please enter the player name or \\back to go back to Lobby menu" << endl;
+        getline(cin, invitePlayerName);
+        
+        if (find(availablePlayersList.begin(), availablePlayersList.end(), invitePlayerName) == availablePlayersList.end())
+            cerr << "Error. Player is not in the list" << endl << endl; 
         else 
         {
-            system("clear");
-            cerr << "Error. Not an option" << endl << endl;
+            string message = "INVITE|" + invitePlayerName + " \r\n \r\n";
+            bool response = false;
+            status = invite(connectedSockfd, invitePlayerName, &response);
+            switch (status)
+            {
+                case ERROR_BAD_PLAYER_NAME:
+                    cerr << "Error. Bad player name"; 
+                    break;
+                case STATUS_OK:
+                    
+                    break;
+                default: 
+                    break;
+            }
+
+            // send invitation and wait for response.
         }
     }
     return STATUS_OK;
@@ -334,7 +352,7 @@ bool scanAgain()
     }
 }
 
-bool parse_list_of_players(string players, list<string> *parsedPlayers)
+bool parse_list_of_players(string players, vector<string> *parsedPlayers)
 {
     size_t pos;
     if (players != "")

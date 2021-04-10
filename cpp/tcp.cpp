@@ -15,9 +15,7 @@ bool connected = false;
 
 using namespace std;
 
-status_t send_tcp_message(int sockfd, const char *message);
-status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse);
-status_t parse_tcp_message(string response, T3PResponse *t3pResponse);
+
 
 status_t login(Server server, string player_name, int *sockfd)
 {
@@ -62,23 +60,16 @@ status_t login(Server server, string player_name, int *sockfd)
 
 status_t logout(int *sockfd)
 {
-    T3PResponse t3pResponse;
     const char *message = "LOGOUT \r\n \r\n";
     if (send_tcp_message(*sockfd, message) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
-
-    if (receive_tcp_message(*sockfd, &t3pResponse) != STATUS_OK)
-        return ERROR_RECEIVING_MESSAGE;
-
-    if (t3pResponse.statusMessage != "OK")
-        return ERROR_STATUS_MESSAGE;
 
     connected = false;
     close(*sockfd);
     return STATUS_OK;
 }
 
-status_t invite(int sockfd, string player_name)
+status_t invite(int sockfd, string player_name, bool *response)
 {
     T3PResponse t3pResponse;
     const char *c_player_name = player_name.c_str();
@@ -160,6 +151,21 @@ void heartbeat_thread(int sockfd)
     }   
 }
 
+/* According to variable "response" it sends an ACCEPT or DECLINE command.
+    true = ACCEPT
+    false = DECLINE*/
+status_t invitation_response(int sockfd,bool response){
+
+    status_t status;
+    string message;
+    if(response == true)
+        message = "ACCEPT \r\n \r\n";
+    else
+        message = "DECLINE \r\n \r\n";
+
+    return send_tcp_message(sockfd, message.c_str()); //returns status_t of function send_tcp_message()
+}
+
 
 /**
  * Internal functions
@@ -191,7 +197,6 @@ status_t parse_tcp_message(string response, T3PResponse *t3pResponse)
 {
     // Format of TCP messages received in clients are:
     // STATUS_CODE|STATUS_MESSAGE \r\n \r\n
-
     size_t pos;
     string statusCode;
     string statusMessage;
@@ -216,6 +221,163 @@ status_t parse_tcp_message(string response, T3PResponse *t3pResponse)
 
     return STATUS_OK;
 }
+
+status_t receive_tcp_command(int sockfd, T3PCommand *t3pCommand, context_t context)
+{
+    status_t status;
+    (*t3pCommand).clear();
+    char message[BUFFER_SIZE] = {0};
+    int bytes = recv(sockfd, message, sizeof(message), 0);
+    if (bytes > 0)
+    {
+        if (parse_tcp_command(string(message), t3pCommand) != STATUS_OK)
+            return ERROR_BAD_REQUEST;
+        if ((status = check_tcp_command(*t3pCommand, context)) != STATUS_OK)
+            return status;
+        t3pCommand->isNewCommand = true;
+    }
+    return STATUS_OK;   
+}
+
+status_t parse_tcp_command(string message, T3PCommand *t3pCommand)
+{
+    size_t pos;
+    if ((pos = message.rfind(" \r\n \r\n")) == string::npos)
+        return ERROR_BAD_REQUEST;
+    
+    // Strip last \r\n
+    message.erase(pos+3);
+
+    // If message contains "|", grab the first part as a command
+    if ((pos = message.find("|")) != string::npos)
+    {
+        t3pCommand->command = message.substr(0, pos);
+        message.erase(0, pos+1);
+        while ((pos = message.find(" \r\n")) != string::npos)
+        {
+            t3pCommand->dataList.push_back(message.substr(0, pos));
+            message.erase(0, pos+3);
+        }
+    }
+    // else, the message should only contain the command
+    else 
+    {
+        //I must have it because we checked at the beginning
+        pos = message.find(" \r\n");
+        t3pCommand->command = message.substr(0, pos);
+    }
+        
+    return STATUS_OK;
+}
+
+status_t check_tcp_command(T3PCommand t3pCommand, context_t context)
+{
+    status_t status;
+    string playerName;
+    list<string> availablePlayers;
+    tcpcommand_t command;
+    // First we need to check if the incomming command is present
+    // in a list of possible commands.
+    if (find(TCPCommands.begin(), TCPCommands.end(), t3pCommand.command) == TCPCommands.end())
+        return ERROR_BAD_REQUEST;
+
+    // Translate the command to a tcpcommand type to ease the later code
+    command = TCPCommandTranslator[t3pCommand.command];
+    // Now that we know that the command actually exists, we need 
+    // to check based on the context if it is valid.
+    switch(context)
+    {
+        case SOCKET_CONNECTED:
+            switch(command)
+            {
+                case LOGIN:
+                    playerName = t3pCommand.dataList.front();
+                    if ((status = checkPlayerName(playerName)) != STATUS_OK)
+                        return status;
+                    if (checkPlayerIsOnline(playerName))
+                        return ERROR_NAME_TAKEN;
+                    break;
+                default:
+                    return ERROR_COMMAND_OUT_OF_CONTEXT;
+            }            
+            break;
+        case LOBBY:
+            switch(command)
+            {
+                case HEARTBEAT:
+                    break;
+                case INVITE:
+                    playerName = t3pCommand.dataList.front();
+                    if ((status = checkPlayerName(playerName)) != STATUS_OK)
+                        return status;
+                    if (!checkPlayerIsOnline(playerName))
+                        return ERROR_PLAYER_NOT_FOUND;
+                    if (!checkPlayerIsAvailable(playerName))
+                        return ERROR_PLAYER_OCCUPIED;
+                    break;
+                case RANDOMINVITE:
+                    availablePlayers = mainDatabase.getAvailablePlayers();
+                    if (availablePlayers.empty())
+                        return INFO_NO_PLAYERS_AVAILABLE;
+                    break;
+                case LOGOUT:
+                    break;
+                default:
+                    return ERROR_COMMAND_OUT_OF_CONTEXT;
+            }
+            break;
+        case WAITING_OTHER_PLAYER_RESPONSE:
+            switch(command)
+            {
+                case HEARTBEAT:
+                    break;
+                default: 
+                    return ERROR_COMMAND_OUT_OF_CONTEXT;
+            }
+            break;
+        case WAITING_RESPONSE:
+            switch(command)
+            {
+                case HEARTBEAT:
+                    break;
+                case ACCEPT:
+                    break;
+                case DECLINE:
+                    break;
+                default:
+                    return ERROR_COMMAND_OUT_OF_CONTEXT;
+            }
+            break;
+        case READY_TO_PLAY:
+            switch(command)
+            {
+                case HEARTBEAT:
+                    break;
+                default:
+                    return ERROR_COMMAND_OUT_OF_CONTEXT;
+            }
+            break;
+        case MATCH:
+            switch(command)
+            {
+                case HEARTBEAT:
+                    break;
+                case MARKSLOT:
+                    break;
+                case GIVEUP:
+                    break;
+                case OK:
+                    break;
+                case BAD:
+                    break;
+                default:
+                    return ERROR_COMMAND_OUT_OF_CONTEXT;
+            }
+            break;
+    }
+    return STATUS_OK;
+}
+
 
 /*need to check if the player is in the correct context first
 If the function return STATUS_OK we should change the context so the 
