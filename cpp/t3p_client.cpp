@@ -9,6 +9,7 @@ status_t t3p_client()
     context_t context = MAIN_MENU;
     Server server;
     string playerName = "edturtu";
+    string invitationhost;
     int connectedSockfd;
     while (context != LOGOUT_CONTEXT)
     {
@@ -47,11 +48,19 @@ status_t t3p_client()
                     context = LOBBY_MENU;
                 break;
             case LOBBY_MENU:
-                if ((status = lobby_menu(&context, server)) != STATUS_OK) 
+                if ((status = lobby_menu(connectedSockfd,&context, &invitationhost)) != STATUS_OK) 
                 {
                     // Handle error
                 }
                 break;
+
+            case INVITATIONFROM:
+               if ((status = invitation_from_menu(connectedSockfd,&context, invitationhost)) != STATUS_OK)
+               {
+
+                   // Handle error
+               }
+
             case SEND_INVITE:
                 
                 // go to invite menu
@@ -65,6 +74,9 @@ status_t t3p_client()
             case IN_A_GAME:
                 //TODO
                 break;
+            default:
+                context = LOBBY_MENU;
+
             
         }   
     }

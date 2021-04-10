@@ -254,3 +254,142 @@ status_t giveup(int sockfd)
 
     return STATUS_OK;
 }
+
+
+status_t poll_tcp_message_invitationtimeout_or_stdin(int sockfd, context_t *context){
+
+    status_t status;
+    struct pollfd pfds[2]; // We monitor 2 things: sockfd and stdin
+
+    pfds[0].fd = 0;          // Standard input
+    pfds[0].events = POLLIN; // Tell me when ready to read
+
+    pfds[1].fd = sockfd; // Some socket descriptor
+    pfds[1].events = POLLIN;  // Tell me when ready to read
+
+    int num_events = poll(pfds, 2, -1); //We pool forever
+
+    if (num_events == 0) {
+        // This case should be impossible but is added just in case
+        return ERROR_POLL_DETECTED_0_EVENTS;
+    } else {
+        int pollin_happened = pfds[0].revents & POLLIN;
+
+        if (pfds[0].revents & POLLIN){ // stdin has been written. We return to go to "getline()"
+            return STATUS_OK;
+        }
+
+        else if (pfds[1].revents & POLLIN){// sockfd has been written. 
+        // We read socket for message. This is a case where the server send us a message when we are
+        // deciding something from the UI. This case only can happen on:
+        // INVITATIONTIMEOUT
+        // INVITATIONFROM
+        // TIMEOUTWIN/TIMEOUTLOSE
+            return receive_invitation_from_timeout(sockfd, context);
+        }else {
+            return ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM;
+        }
+    }
+
+    return STATUS_OK;
+}
+
+status_t receive_invitation_from_timeout(int sockfd,context_t *context){
+
+    char c_response[BUFFER_SIZE];
+    size_t pos;
+    string response;
+    
+    memset(c_response, 0, strlen(c_response));
+    
+    int bytes = recv(sockfd, c_response, sizeof(c_response), 0);
+    if (bytes < 0)
+        return ERROR_RECEIVING_MESSAGE;
+
+    response = c_response;
+    if (response.rfind(" \r\n \r\n") == string :: npos)
+        return ERROR_BAD_MESSAGE_FORMAT;
+    pos = response.find(" \r\n");
+    response = response.substr(0, pos);
+    if (response == "INVITATIONTIMEOUT"){
+        *context = LOBBY_MENU;
+        std::cout << "You didn't respond invitation: TIMEOUT. Returning to LOBBY" << endl;
+        return STATUS_OK;
+    }
+    else
+        return ERROR_BAD_MESSAGE_FORMAT;
+    
+    return STATUS_OK;
+}
+
+// We poll to recive a interaction from the clientplayer, or if server is sending us an INVITEFROM
+// COPIED FROM PREVIOUS FUNCTION
+status_t poll_tcp_message_invitationfrom_or_stdin(int sockfd, context_t *context, string *invitationhost){
+
+    status_t status;
+    struct pollfd pfds[2]; // We monitor 2 things: sockfd and stdin
+
+    pfds[0].fd = stdin->_fileno; // Standard input
+    pfds[0].events = POLLIN; // Tell me when ready to read
+
+    pfds[1].fd = sockfd; // Some socket descriptor
+    pfds[1].events = POLLIN;  // Tell me when ready to read
+
+    int num_events = poll(pfds, 2, -1); //We pool forever
+
+    if (num_events == 0) {
+        // This case should be impossible but is added just in case
+        return ERROR_POLL_DETECTED_0_EVENTS;
+    } else {
+        int pollin_happened = pfds[0].revents & POLLIN;
+
+        if (pfds[0].revents & POLLIN){ // stdin has been written. We return to go to "getline()"
+            return STATUS_OK;
+        }
+
+        else if (pfds[1].revents & POLLIN){// sockfd has been written. 
+        // We read socket for message. This is a case where the server send us a message when we are
+        // deciding something from the UI. This case only can happen on:
+        // INVITATIONFROM
+            return receive_invitation_from(sockfd, context, invitationhost);
+        }else {
+            return ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM;
+        }
+    }
+
+    return STATUS_OK;
+}
+
+
+status_t receive_invitation_from(int sockfd,context_t *context, string *invitationhost){
+
+    char c_response[BUFFER_SIZE];
+    size_t pos;
+    string response;
+    
+    memset(c_response, 0, strlen(c_response));
+    
+    int bytes = recv(sockfd, c_response, sizeof(c_response), 0);
+    if (bytes < 0)
+        return ERROR_RECEIVING_MESSAGE;
+
+    response = c_response;
+    if (response.rfind(" \r\n \r\n") == string :: npos)
+        return ERROR_BAD_MESSAGE_FORMAT;
+    pos = response.find(" \r\n");
+    response = response.substr(0, pos);
+
+    // we separete INVITEFROM|<playerName>
+    if ((pos = response.find("|")) != string :: npos){
+
+        if(response.substr(0,pos) != "INVITEFROM")
+            return ERROR_NOT_RECIVIED_INVTEFROM;
+        
+        *invitationhost = response.substr(pos+1);
+        (*context) = INVITATIONFROM;
+    }
+    else
+        return ERROR_BAD_MESSAGE_FORMAT;
+    
+    return STATUS_OK;
+}

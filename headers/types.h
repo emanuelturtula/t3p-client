@@ -22,6 +22,9 @@ enum status_t {
     ERROR_STATUS_MESSAGE,
     ERROR_BAD_PLAYER_NAME,
     ERROR_OUT_OF_CONTEXT,
+    ERROR_POLL_DETECTED_0_EVENTS,
+    ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM,
+    ERROR_NOT_RECIVIED_INVTEFROM,
 
     ERROR_NULL_POINTER,
 
@@ -55,9 +58,13 @@ enum context_t {
     CONNECT,
     SEND_INVITE,
     SEND_RANDOMINVITE,
+    INVITATIONFROM,
+    SEND_ACCEPT,
+    SEND_DECLINE,
     SEARCH_PLAYERS,
     LOGOUT_CONTEXT,
-    IN_A_GAME
+    IN_A_GAME,
+    READY_TO_PLAY
 };
 
 enum tcpcommand_t {
@@ -93,3 +100,4 @@ class T3PResponse {
         string statusMessage;
         list<string> dataList; 
 };
+

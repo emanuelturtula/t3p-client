@@ -10,7 +10,7 @@
 //DEBUG SELECTION
 //#define DEBUG_UDP
 //#define DEBUG_MENUS
-#define DEBUG_TCP
+//#define DEBUG_TCP
 
 
 

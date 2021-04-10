@@ -23,6 +23,7 @@ status_t run_tests()
     #ifdef DEBUG_TCP
         return run_test_tcp();
     #endif
+    return STATUS_OK;
 }
 
 status_t run_test_udp()
