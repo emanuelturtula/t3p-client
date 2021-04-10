@@ -148,7 +148,6 @@ status_t wait_invitation_response(int sockfd, bool *accept)
     return STATUS_OK;
 }
 
-
 void heartbeat_thread(int sockfd)
 {
     const char *message = "HEARTBEAT \r\n \r\n";
