@@ -57,7 +57,7 @@ void tcp_thread()
         while(connected == true)
         {
             memset(buffer, 0, strlen(buffer));
-            if (read(connfd, buffer, sizeof(buffer)) < 0)
+            if (recv(connfd, buffer, sizeof(buffer),0) < 0)
                 write_stderr("TCP THREAD - ERROR READING MESSAGE");
             if ((response = respond(connfd, string(buffer))) < 0)
                 write_stderr("TCP THREAD - ERROR RESPONDING");
@@ -85,30 +85,31 @@ int respond(int connfd, string buffer)
     else if (buffer == "LOGIN|edturtu \r\n \r\n")
     {
         write_stdout("TCP THREAD - Received LOGIN.");
-        if (write(connfd, login_response, strlen(login_response)) < 0)
+        if (send(connfd, login_response, strlen(login_response),0) < 0)
             return -1;
     }
     else if (buffer == "LOGOUT \r\n \r\n")
     {
         write_stdout("TCP THREAD - Received LOGOUT.");
-        if (write(connfd, logout_response, strlen(logout_response)) < 0)
+        if (send(connfd, logout_response, strlen(logout_response),0) < 0)
             return -1;
         return 1;
     }
     else if (buffer == "INVITE|edturtu \r\n \r\n")
     {
         write_stdout("TCP THREAD - Received INVITE.");
-        if (write(connfd, invite_response, strlen(invite_response)) < 0)
+        if (send(connfd, invite_response, strlen(invite_response),0) < 0)
             return -1;
-        if (write(connfd, accept_invite_response, strlen(accept_invite_response)) < 0)
+        write_stdout("TCP THREAD - Writed Invite_response INVITE.");
+        if (send(connfd, accept_invite_response, strlen(accept_invite_response),0) < 0)
             return -1;
     }
     else if (buffer == "RANDOMINVITE \r\n \r\n")
     {
         write_stdout("TCP THREAD - Received RANDOMINVITE.");
-        if (write(connfd, random_invite_response, strlen(random_invite_response)) < 0)
+        if (send(connfd, random_invite_response, strlen(random_invite_response),0) < 0)
             return -1;
-        if (write(connfd, decline_invite_response, strlen(decline_invite_response)) < 0)
+        if (send(connfd, decline_invite_response, strlen(decline_invite_response),0) < 0)
             return -1;
     }
     else 

@@ -128,9 +128,14 @@ status_t wait_invitation_response(int sockfd, bool *accept)
     char c_response[BUFFER_SIZE];
     size_t pos;
     string response;
-    int bytes = read(sockfd, c_response, sizeof(c_response));
+    
+    memset(c_response, 0, strlen(c_response));
+    
+    int bytes = recv(sockfd, c_response, sizeof(c_response), 0);
     if (bytes < 0)
         return ERROR_RECEIVING_MESSAGE;
+
+    response = c_response;
     if (response.rfind(" \r\n \r\n") == string :: npos)
         return ERROR_BAD_MESSAGE_FORMAT;
     pos = response.find(" \r\n");
@@ -174,7 +179,8 @@ status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse)
 {
     char response[BUFFER_SIZE];
     memset(response, 0, strlen(response));
-    int bytes = read(sockfd, response, sizeof(response));
+    
+    int bytes = recv(sockfd, response, sizeof(response), 0);
     if (bytes < 0)
         return ERROR_RECEIVING_MESSAGE;
     if (parse_tcp_message(string(response), t3pResponse) != STATUS_OK)
@@ -218,7 +224,7 @@ player would leave the game*/
 status_t giveup(int sockfd)
 {
     T3PResponse t3pResponse;
-    char message[BUFFER_SIZE];
+   // char message[BUFFER_SIZE];
 
     // format string
     const char* message = "GIVEUP \r\n \r\n";
