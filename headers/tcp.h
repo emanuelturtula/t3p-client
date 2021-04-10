@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <iostream>
 #include "types.h"
 #include <poll.h>
 
@@ -25,6 +26,11 @@ status_t send_tcp_message(int sockfd, const char *message);
 status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse);
 status_t parse_tcp_message(string response, T3PResponse *t3pResponse);
 
-status_t poll_tcp_message_or_stdin(int sockfd, context_t *context);
+status_t poll_tcp_message_invitationtimeout_or_stdin(int sockfd, context_t *context);
+status_t poll_tcp_message_invitationfrom_or_stdin(int sockfd, context_t *context,string *invitationhost);
+
+status_t receive_invitation_from_timeout(int sockfd,context_t *context);
+status_t receive_invitation_from(int sockfd,context_t *context,string *invitationhost);
+
 
 

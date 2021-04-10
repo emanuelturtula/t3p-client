@@ -231,11 +231,12 @@ status_t connect_menu(context_t *context, Server server)
     return STATUS_OK;
 }
 
-status_t lobby_menu(context_t *context)
+status_t lobby_menu(int sockfd,context_t *context, string *invitationhost)
 {
     /**
      * 
      */
+    status_t status;
     string selection;
     *context = LOBBY_MENU;
     while ((*context) == LOBBY_MENU)
@@ -246,20 +247,28 @@ status_t lobby_menu(context_t *context)
         cout << "2 - Random Match" << endl;
         cout << "3 - List of available players" << endl;
         cout << "4 - Logout" << endl;
-        getline(cin, selection);
-        if (selection.compare("1") == 0)
-            (*context) = SEND_INVITE;
-        else if (selection.compare("2") == 0)
-            (*context) = SEND_RANDOMINVITE;
-        else if (selection.compare("3") == 0)
-            (*context) = SEARCH_PLAYERS;        
-        else if (selection.compare("4") == 0)
-            (*context) = LOGOUT_CONTEXT;                    
-        else 
-        {
-            system("clear");
-            cerr << "Error. Not an option" << endl << endl;
+
+        if( (status = poll_tcp_message_invitationfrom_or_stdin(sockfd,context,invitationhost)) != STATUS_OK){
+            return status;
         }
+        
+        //if context is untouched, we received a stdin write
+        if((*context) == LOBBY_MENU){
+            getline(cin, selection);
+            if (selection.compare("1") == 0)
+                (*context) = SEND_INVITE;
+            else if (selection.compare("2") == 0)
+                (*context) = SEND_RANDOMINVITE;
+            else if (selection.compare("3") == 0)
+                (*context) = SEARCH_PLAYERS;        
+            else if (selection.compare("4") == 0)
+                (*context) = LOGOUT_CONTEXT;                    
+            else 
+            {
+                system("clear");
+                cerr << "Error. Not an option" << endl << endl;
+            }
+        }   
     }
     return STATUS_OK;
 }
@@ -300,7 +309,7 @@ status_t invitation_from_menu(int sockfd,context_t *context, string invitationHo
 
         // We receive a selection from the user or server send us a INVITATIONTIMEOUT
 
-        if ( (status = poll_tcp_message_or_stdin(sockfd,context)) != STATUS_OK){
+        if ( (status = poll_tcp_message_invitationtimeout_or_stdin(sockfd,context)) != STATUS_OK){
             return status;
         }
 
