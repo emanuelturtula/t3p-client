@@ -273,7 +273,7 @@ status_t lobby_menu(context_t *context)
         else if (selection.compare("3") == 0)
             (*context) = SEARCH_PLAYERS;        
         else if (selection.compare("4") == 0)
-            (*context) = LOGOUT;                    
+            (*context) = LOGOUT_CONTEXT;                    
         else 
         {
             system("clear");

@@ -34,6 +34,7 @@ void tcp_thread()
 
     while (1)
     {
+        sleep(2);
         connected = false;
         if ((listen(sockfd, 5)) != 0)
         {
@@ -66,7 +67,8 @@ void tcp_thread()
                 close(connfd);
                 write_stdout("TCP THREAD - CLOSING CONNECTION");
                 connected = false;
-            }    
+            }
+
         }
     }
     
@@ -97,10 +99,10 @@ int respond(int connfd, string buffer)
     }
     else if (buffer == "INVITE|edturtu \r\n \r\n")
     {
-        write_stdout("TCP THREAD - Received INVITE.");
+        write_stdout("TCP THREAD - Received INVITE from edturtu.");
         if (send(connfd, invite_response, strlen(invite_response),0) < 0)
             return -1;
-        write_stdout("TCP THREAD - Writed Invite_response INVITE.");
+        write_stdout("TCP THREAD - Writed accept_invite_response.");
         if (send(connfd, accept_invite_response, strlen(accept_invite_response),0) < 0)
             return -1;
     }
@@ -109,8 +111,20 @@ int respond(int connfd, string buffer)
         write_stdout("TCP THREAD - Received RANDOMINVITE.");
         if (send(connfd, random_invite_response, strlen(random_invite_response),0) < 0)
             return -1;
+            
+        write_stdout("TCP THREAD - Writed decline_invite_response.");
         if (send(connfd, decline_invite_response, strlen(decline_invite_response),0) < 0)
             return -1;
+    }
+    else if (buffer == "ACCEPT \r\n \r\n")
+    {
+        write_stdout("TCP THREAD - Received ACCEPT.");
+        return 1;
+    }
+    else if (buffer == "DECLINE \r\n \r\n")
+    {
+        write_stdout("TCP THREAD - Received DECLINE.");
+        return 1;
     }
     else 
     {

@@ -7,7 +7,7 @@ status_t t3p_client()
     status_t status;
     context_t context = MAIN_MENU;
     Server server;
-    while (context != LOGOUT)
+    while (context != LOGOUT_CONTEXT)
     {
         switch(context)
         {
