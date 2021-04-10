@@ -254,3 +254,66 @@ status_t giveup(int sockfd)
 
     return STATUS_OK;
 }
+
+
+status_t poll_tcp_message_or_stdin(int sockfd, context_t *context){
+
+    status_t status;
+    struct pollfd pfds[2]; // We monitor 2 things: sockfd and stdin
+
+    pfds[0].fd = 0;          // Standard input
+    pfds[0].events = POLLIN; // Tell me when ready to read
+
+    pfds[1].fd = sockfd; // Some socket descriptor
+    pfds[1].events = POLLIN;  // Tell me when ready to read
+
+    int num_events = poll(pfds, 1, 50000); // 50 seconds of timeout
+
+    if (num_events == 0) {
+        // This case should be impossible but is added just in case
+        return ERROR_REACHED_INVITATION_FROM_TIMEOUT_BUT_SERVER_DIDNT_SEND_INVITATIONTIMEOUT;
+    } else {
+        int pollin_happened = pfds[0].revents & POLLIN;
+
+        if (pfds[0].revents & POLLIN){ // stdin has been written
+            return STATUS_OK;
+        }
+
+        else if (pfds[1].revents & POLLIN){// sockfd has been written. We should get a INVITATIONTIMEOUT
+            *context = LOBBY_MENU;
+            return receive_invitation_from_timeout(sockfd);
+        }else {
+            return ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM;
+        }
+    }
+
+    return STATUS_OK;
+}
+
+status_t receive_invitation_from_timeout(int sockfd){
+
+    char c_response[BUFFER_SIZE];
+    size_t pos;
+    string response;
+    
+    memset(c_response, 0, strlen(c_response));
+    
+    int bytes = recv(sockfd, c_response, sizeof(c_response), 0);
+    if (bytes < 0)
+        return ERROR_RECEIVING_MESSAGE;
+
+    response = c_response;
+    if (response.rfind(" \r\n \r\n") == string :: npos)
+        return ERROR_BAD_MESSAGE_FORMAT;
+    pos = response.find(" \r\n");
+    response = response.substr(0, pos);
+    if (response == "INVITATIONTIMEOUT")
+        return STATUS_OK;
+    else
+        return ERROR_BAD_MESSAGE_FORMAT;
+    
+    return STATUS_OK;
+
+
+}
+

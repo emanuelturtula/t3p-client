@@ -280,3 +280,46 @@ bool scanAgain()
             cerr << "Error. Option invalid." << endl;
     }
 }
+
+// Menu that display when client receives a INVITATIONFROM. Displays invitationHost and ask the client
+// if he wants to DECLINE or ACCEPT.
+// If the context is changed because client received INVITATIONTIMEOUT.
+status_t invitation_from_menu(int sockfd,context_t *context, string invitationHost){
+
+    string selection;
+    status_t status;
+    
+    *context = INVITATIONFROM;
+    while ((*context) == INVITATIONFROM)
+    {
+        cout << "You received an invitation!!" << endl;
+        cout << "Invitation from " << invitationHost << endl;
+        cout << "Please select one option" << endl;
+        cout << "1 - Accept" << endl;
+        cout << "2 - Decline" << endl;
+
+        // We receive a selection from the user or server send us a INVITATIONTIMEOUT
+
+        if ( (status = poll_tcp_message_or_stdin(sockfd,context)) != STATUS_OK){
+            return status;
+        }
+
+        if((*context) == INVITATIONFROM){
+            getline(cin, selection);
+            if (selection.compare("1") == 0){
+                (*context) = READY_TO_PLAY;
+                return invitation_response(sockfd,true);
+            }
+            else if (selection.compare("2") == 0){
+                (*context) = LOBBY_MENU;
+                return invitation_response(sockfd,false);
+            }   
+            else{
+                system("clear");
+                cerr << "Error. Not an option" << endl << endl;
+            }
+        }
+    }
+    
+    return STATUS_OK;
+}
