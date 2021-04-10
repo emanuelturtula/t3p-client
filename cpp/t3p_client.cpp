@@ -10,7 +10,7 @@ status_t t3p_client()
     Server server;
     string playerName = "edturtu";
     int connectedSockfd;
-    while (context != LOGOUT)
+    while (context != LOGOUT_CONTEXT)
     {
         switch(context)
         {
