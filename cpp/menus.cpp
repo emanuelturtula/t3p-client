@@ -2,6 +2,7 @@
 #include <string>
 #include <regex>
 #include <stdlib.h>
+#include <list>
 #include "../headers/types.h"
 #include "../headers/menus.h"
 #include "../headers/udp.h"
@@ -9,6 +10,7 @@
 using namespace std;
 
 bool scanAgain();
+bool parse_list_of_players(string players, list<string> *parsedPlayers); 
 
 status_t main_menu(context_t *context)
 {
@@ -244,8 +246,59 @@ status_t lobby_menu(context_t *context)
         cout << "Please select one option" << endl;
         cout << "1 - Invite a Player" << endl;
         cout << "2 - Random Match" << endl;
-        cout << "3 - List of available players" << endl;
-        cout << "4 - Logout" << endl;
+        cout << "3 - Logout" << endl;
+        getline(cin, selection);
+        if (selection.compare("1") == 0)
+            (*context) = SEND_INVITE_MENU;
+        else if (selection.compare("2") == 0)
+            (*context) = SEND_RANDOMINVITE_MENU;  
+        else if (selection.compare("3") == 0)
+            (*context) = LOGOUT;                    
+        else 
+        {
+            system("clear");
+            cerr << "Error. Not an option" << endl << endl;
+        }
+    }
+    return STATUS_OK;
+}
+
+status_t invite_menu(context_t *context, Server server) 
+{
+    /**
+     * 
+     */
+    string selection;
+    status_t status;
+    T3PResponse t3pResponse;
+    string availablePlayers;
+    list<string> availablePlayersList;
+    *context = SEND_INVITE_MENU;
+    while ((*context) == SEND_INVITE_MENU)
+    {
+        cout << "TicTacToe INVITE" << endl;
+        if ((status = send_discover(server.ip, &t3pResponse)) != STATUS_OK)
+        {
+            
+        }
+        availablePlayers = t3pResponse.dataList.front();   
+        if (!parse_list_of_players(availablePlayers, &availablePlayersList))
+        {
+            cout << "There are no players avaiable. " << endl;
+            system("pause");
+        }
+        cout << "List of available players: " << endl;
+        int i = 0;
+        for (auto const& player : availablePlayersList)
+        {
+            cout << "List of available players: " << endl;
+            cout << i << " - " << player << endl; 
+            
+        }
+
+
+        cout << "Please enter the player name" << endl;
+        cout << "1 - Invite a Player" << endl;
         getline(cin, selection);
         if (selection.compare("1") == 0)
             (*context) = SEND_INVITE;
@@ -279,4 +332,20 @@ bool scanAgain()
         else
             cerr << "Error. Option invalid." << endl;
     }
+}
+
+bool parse_list_of_players(string players, list<string> *parsedPlayers)
+{
+    size_t pos;
+    if (players != "")
+    {
+        while ((pos = players.find("|")) != string::npos)
+        {
+            (*parsedPlayers).push_back(players.substr(0, pos));
+            players.erase(0, pos+1);
+        }
+        (*parsedPlayers).push_back(players.substr(0));
+        return true;  
+    }
+    return false; 
 }

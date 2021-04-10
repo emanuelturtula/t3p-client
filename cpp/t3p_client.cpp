@@ -52,16 +52,12 @@ status_t t3p_client()
                     // Handle error
                 }
                 break;
-            case SEND_INVITE:
-                
+            case SEND_INVITE_MENU:
                 // go to invite menu
                 break;
-            case SEND_RANDOMINVITE:
+            case SEND_RANDOMINVITE_MENU:
                 // go to random invite menu
                 break;      
-            case SEARCH_PLAYERS:
-                // go to search players menu
-                break;
             case IN_A_GAME:
                 //TODO
                 break;
