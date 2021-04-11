@@ -57,7 +57,7 @@ status_t T3PServerMessages::setName(string name){
     return STATUS_OK;
 }
 
-status_t T3PServerMessages::read_buffer(string dataStream){
+status_t T3PServerMessages::parse_buffer(string dataStream){
     size_t pos;
     status_t status;
 
