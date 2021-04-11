@@ -282,10 +282,26 @@ status_t send_tcp_message(int sockfd, const char *message)
 
 status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse)
 {
-    char response[BUFFER_SIZE];
+    int read_bytes;
+    status_t status;
+    char response[BUFFER_SIZE] = {0};
+    int strip_bytes = 0;
+    int pos;
+
     memset(response, 0, strlen(response));
+    string socket_message;
+
+
+    if ((status = peek_tcp_buffer(sockfd, &read_bytes, &socket_message)) != STATUS_OK)
+        return status;
     
-    int bytes = recv(sockfd, response, sizeof(response), 0);
+    if ((pos = socket_message.find_first_of(" \r\n \r\n")) != string :: npos)
+        strip_bytes = pos + strlen(" \r\n \r\n");
+        
+    int bytes = recv(sockfd, response, strip_bytes, 0);
+
+    //// AGREGAR PEEK int bytes = recv(sockfd, response, sizeof(response), 0);
+    
     if (bytes < 0)
         return ERROR_RECEIVING_MESSAGE;
     if (parse_tcp_message(string(response), t3pResponse) != STATUS_OK)
