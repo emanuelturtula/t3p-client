@@ -21,7 +21,7 @@ class T3PServerMessages{
         T3PServerMessages();
         void clear();
         void addData(string data);
-        status_t read_buffer(string dataStream);
+        status_t parse_buffer(string dataStream);
         status_t setName(string name);
         string getName();
 };
