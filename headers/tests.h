@@ -11,7 +11,7 @@
 //#define DEBUG_UDP
 //#define DEBUG_MENUS
 //#define DEBUG_TCP
-
+//#define DEBUG_MATCH
 
 
 status_t run_tests();

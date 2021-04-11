@@ -7,7 +7,7 @@ using namespace std;
 
 int main()
 {
-    #if defined(DEBUG_UDP) || defined(DEBUG_MENUS) || defined(DEBUG_TCP)
+    #if defined(DEBUG_UDP) || defined(DEBUG_MENUS) || defined(DEBUG_TCP) || defined(DEBUG_MATCH)
         status_t status;
         if ((status = run_tests()) != STATUS_OK){
             cout << "Ending with status_t = " << status << "\n";
