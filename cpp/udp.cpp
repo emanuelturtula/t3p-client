@@ -112,7 +112,6 @@ status_t send_discover(string ip, T3PResponse *t3pResponse)
 /**
  * Internal functions
  * */
-
 status_t receive(int sockfd, struct sockaddr_in server_addr, list<T3PResponse> *t3pResponseList)
 {
     // Declare variables

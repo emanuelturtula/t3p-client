@@ -11,6 +11,19 @@ T3PResponse :: T3PResponse()
 
 }
 
+T3PCommand :: T3PCommand()
+{
+    this->command = "";
+    this->dataList.clear();
+}
+
+void T3PCommand :: clear()
+{
+    this->command = "";
+    this->isNewCommand = false;
+    this->dataList.clear();
+}
+
 Server :: Server()
 {
     

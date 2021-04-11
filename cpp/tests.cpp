@@ -62,47 +62,48 @@ status_t run_test_menus()
     return status;
 }
 
-status_t run_test_tcp()
-{
-    status_t status;
-    Server testServer;
-    int sockfd;
-    string player_name = "edturtu";
-    testServer.ip = "127.0.0.1";
-    bool accept = false;
-    if ((status = login(testServer, player_name, &sockfd)) != STATUS_OK)
-        return status;
-    // thread heartbeat_thd(heartbeat_thread, sockfd);
-    // if ((status = logout(&sockfd)) != STATUS_OK)
-    //     return status;
-    // heartbeat_thd.join();
-    cout << "1. Sending invitation to edturtu = true\n";
-    if ((status = invite(sockfd, "edturtu")) != STATUS_OK)
-        return status;
+// status_t run_test_tcp()
+// {
+//     status_t status;
+//     Server testServer;
+//     int sockfd;
+//     string player_name = "edturtu";
+//     testServer.ip = "127.0.0.1";
+//     bool accept = false;
+//     bool response;
+//     if ((status = login(testServer, player_name, &sockfd)) != STATUS_OK)
+//         return status;
+//     // thread heartbeat_thd(heartbeat_thread, sockfd);
+//     // if ((status = logout(&sockfd)) != STATUS_OK)
+//     //     return status;
+//     // heartbeat_thd.join();
+//     cout << "1. Sending invitation to edturtu = true\n";
+//     if ((status = invite(sockfd, "edturtu", &response)) != STATUS_OK)
+//         return status;
 
 
-    cout << "1.2 wait_invitation_response from edturtu\n";
-    if ((status = wait_invitation_response(sockfd, &accept)) != STATUS_OK)
-        return status;  
-    cout << "1.3 invitation to edturtu result in: " << accept << ". Should be TRUE == 1\n";
+//     cout << "1.2 wait_invitation_response from edturtu\n";
+//     if ((status = wait_invitation_response(sockfd, &accept)) != STATUS_OK)
+//         return status;  
+//     cout << "1.3 invitation to edturtu result in: " << accept << ". Should be TRUE == 1\n";
 
 
 
-    cout << "3. Sending random_invite\n";
-    if ((status = random_invite(sockfd)) != STATUS_OK)
-        return status;
+//     cout << "3. Sending random_invite\n";
+//     if ((status = random_invite(sockfd)) != STATUS_OK)
+//         return status;
 
 
-    cout << "3.1 wait_invitation_response from random_invite\n";
-    if ((status = wait_invitation_response(sockfd, &accept)) != STATUS_OK)
-        return status;
-    cout << "3.3 random_invite result in: " << accept << ". Should be FALSE\n";
+//     cout << "3.1 wait_invitation_response from random_invite\n";
+//     if ((status = wait_invitation_response(sockfd, &accept)) != STATUS_OK)
+//         return status;
+//     cout << "3.3 random_invite result in: " << accept << ". Should be FALSE\n";
 
 
-    cout << "4. Sending invitation_response = false. (we do not receive answer for this case)\n";
-    if ((status = invitation_response(sockfd, &accept)) != STATUS_OK)
-        return status;  
+//     cout << "4. Sending invitation_response = false. (we do not receive answer for this case)\n";
+//     if ((status = invitation_response(sockfd, &accept)) != STATUS_OK)
+//         return status;  
 
 
-    return STATUS_OK;
-}
+//     return STATUS_OK;
+// }
