@@ -544,7 +544,7 @@ status_t ready_to_play_context_setup(int sockfd, context_t *context, MatchInfo *
     if ( (status = poll_tcp_message(sockfd,&first_turn)) != STATUS_OK)
         return status;
 
-    if( (status = t3pserverMessage.read_buffer(first_turn)) != STATUS_OK)
+    if( (status = t3pserverMessage.parse_buffer(first_turn)) != STATUS_OK)
         return status;
 
     if (first_turn == ""){
