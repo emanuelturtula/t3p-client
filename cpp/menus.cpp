@@ -447,30 +447,23 @@ status_t received_invite_menu(context_t *context, int connectedSockfd, string in
 status_t random_invite_menu(context_t *context, int connectedSockfd)
 {
     status_t status;
-    T3PResponse t3pResponse;
     T3PCommand t3pCommand;
-    tcpcommand_t command;
     *context = SEND_RANDOMINVITE_MENU;
     system("clear");
 
     cout << RANDOMINVITE_MENU_TITLE << endl;
     cout << "Sending random invite message..." << endl;
-    if ((status = send_tcp_message(connectedSockfd, "RANDOMINVITE \r\n \r\n")) != STATUS_OK)
-        return status;
-    if ((status = receive_tcp_message(connectedSockfd, &t3pResponse)) != STATUS_OK)
-        return status;
-    if (t3pResponse.statusMessage != "OK")
+    if ((status = random_invite(connectedSockfd, &t3pCommand)) != STATUS_OK)
     {
-        (*context) = LOBBY_MENU;
-        cerr << "There was an error sending the invitation. Going back to lobby" << endl;
+        if (status == INFO_NO_PLAYERS_AVAILABLE)
+            cout << "No players available" << endl;
+        else
+            cerr << "Error. Random invite failed" << endl;
+        *context = LOBBY_MENU;
         sleep(2);
-        return STATUS_OK;
-    }
-    cout << "Requested random invitation correctly. Waiting for a player to respond..." << endl;
-    
-    if ((status = receive_tcp_command(connectedSockfd, &t3pCommand)) != STATUS_OK)
         return status;
-    
+    }
+        
     if (t3pCommand.command == "ACCEPT")
     {
         cout << "A player accepted!" << endl;

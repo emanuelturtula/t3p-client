@@ -15,7 +15,7 @@ using namespace std;
 status_t login(Server server, string player_name, int *sockfd);
 status_t logout(int *sockfd);
 status_t invite(int sockfd, string player_name, bool *response);
-status_t random_invite(int sockfd);
+status_t random_invite(int sockfd, T3PCommand *t3pCommand);
 status_t wait_invitation_response(int sockfd, bool *accept);
 status_t invitation_response(int sockfd,bool response);
 

@@ -108,18 +108,28 @@ status_t invite(int sockfd, string player_name, bool *response)
     return STATUS_OK;
 }
 
-status_t random_invite(int sockfd)
+status_t random_invite(int sockfd, T3PCommand *t3pCommand)
 {
     T3PResponse t3pResponse;
     const char *message = "RANDOMINVITE \r\n \r\n";
+    
+    // Send the invite
     if (send_tcp_message(sockfd, message) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
 
+    // Read the 200 OK
     if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
         return ERROR_RECEIVING_MESSAGE;
 
+    if (t3pResponse.statusCode == "101")
+        return INFO_NO_PLAYERS_AVAILABLE;
+
     if (t3pResponse.statusMessage != "OK")
         return ERROR_STATUS_MESSAGE;
+
+    // Wait for answer
+    if (receive_tcp_command(sockfd, t3pCommand) != STATUS_OK)
+        return ERROR_RECEIVING_MESSAGE;
     
     return STATUS_OK;
 }
