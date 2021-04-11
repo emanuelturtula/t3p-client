@@ -71,10 +71,10 @@ status_t T3PServerMessages::read_buffer(string dataStream){
 
         if (( status = this->setName(dataStream.substr(0, pos))) != STATUS_OK)
         dataStream.erase(0, pos+1);
-        while ((pos = dataStream.find(" \r\n")) != string::npos)
+        while ((pos = dataStream.find("|")) != string::npos || (pos = dataStream.find(" \r\n")) != string::npos)
         {
             this->addData(dataStream.substr(0, pos));
-            dataStream.erase(0, pos+3);
+            dataStream.erase(0, pos+1);
         }
     }
     // else, the message should only contain the command
@@ -82,7 +82,7 @@ status_t T3PServerMessages::read_buffer(string dataStream){
     {
         //I must have it because we checked at the beginning
         pos = dataStream.find(" \r\n");
-        this->addData(dataStream.substr(0, pos));
+        this->setName(dataStream.substr(0, pos));
     }
         
     return STATUS_OK;
