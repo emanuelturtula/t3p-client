@@ -463,7 +463,7 @@ status_t random_invite_menu(context_t *context, int connectedSockfd)
         sleep(2);
         return status;
     }
-        
+    
     if (t3pCommand.command == "ACCEPT")
     {
         cout << "A player accepted!" << endl;
@@ -535,8 +535,15 @@ status_t ready_to_play_context_setup(int sockfd, context_t *context, MatchInfo *
     if ( (status = poll_tcp_message(sockfd, &first_turn)) != STATUS_OK)
         return status;
 
+        
     if( (status = t3pserverMessage.parse_buffer(first_turn)) != STATUS_OK)
+    {
+        *context = LOBBY_MENU;
+        cerr << "Error. Server didn't send match start" << endl;
+        sleep(2);
         return status;
+    }
+
 
     if (first_turn == ""){
         return ERROR_READY_TO_PLAY_MATCH_NOT_SET_FROM_SERVER;
