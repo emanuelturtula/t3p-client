@@ -18,6 +18,86 @@ bool connected = false;
 
 using namespace std;
 
+
+/**
+ * Methods for T3PCommand
+ * */
+T3PServerMessages :: T3PServerMessages()
+{
+    this->name = "";
+    this->dataList.clear();
+}
+
+string T3PServerMessages::getName(){
+    return this->name;
+}
+
+void T3PServerMessages :: clear()
+{
+    this->name = "";
+    this->dataList.clear();
+}
+
+void T3PServerMessages::addData(string data){
+    this->dataList.push_back(data);
+}
+
+status_t T3PServerMessages::setName(string name){
+
+    if( name.compare("INVITATIONTIMEOUT") == 0 ||
+        name.compare("INVITEFROM") == 0 ||
+        name.compare("TURNPLAY") == 0 ||
+        name.compare("TURNWAIT") == 0 ||
+        name.compare("MATCHEND") == 0){
+        this->name = name;
+    }else{
+        return ERROR_BAD_REQUEST;
+    }
+
+    return STATUS_OK;
+}
+
+status_t T3PServerMessages::parse_buffer(string dataStream){
+    size_t pos;
+    status_t status;
+
+    this->clear();
+
+
+    if ((pos = dataStream.rfind(" \r\n \r\n")) == string::npos)
+    return ERROR_BAD_REQUEST;
+
+    // Strip last \r\n
+    dataStream.erase(pos+3);
+
+    // If message contains "|", grab the first part as a command
+    if ((pos = dataStream.find("|")) != string::npos)
+    {
+
+        if (( status = this->setName(dataStream.substr(0, pos))) != STATUS_OK)
+        dataStream.erase(0, pos+1);
+        while ((pos = dataStream.find("|")) != string::npos || (pos = dataStream.find(" \r\n")) != string::npos)
+        {
+            this->addData(dataStream.substr(0, pos));
+            dataStream.erase(0, pos+1);
+        }
+    }
+    // else, the message should only contain the command
+    else 
+    {
+        //I must have it because we checked at the beginning
+        pos = dataStream.find(" \r\n");
+        this->setName(dataStream.substr(0, pos));
+    }
+        
+    return STATUS_OK;
+
+}
+
+/**
+ * END--------Methods for T3PCommand
+ * */
+
 status_t login(Server server, string player_name, int *sockfd)
 {
     struct sockaddr_in server_addr = {0};
@@ -290,12 +370,98 @@ status_t giveup(int sockfd)
     if (send_tcp_message(sockfd, message) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
 
+
+    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
+        return ERROR_RECEIVING_MESSAGE;
+
+    if (t3pResponse.statusMessage != "OK")
+        return ERROR_STATUS_MESSAGE;
+
+    return STATUS_OK;
+}
+
+
+status_t poll_tcp_message_invitationtimeout_or_stdin(int sockfd, context_t *context){
+
+    status_t status;
+    struct pollfd pfds[2]; // We monitor 2 things: sockfd and stdin
+
+    pfds[0].fd = 0;          // Standard input
+    pfds[0].events = POLLIN; // Tell me when ready to read
+
+    pfds[1].fd = sockfd; // Some socket descriptor
+    pfds[1].events = POLLIN;  // Tell me when ready to read
+
+    int num_events = poll(pfds, 2, -1); //We pool forever
+
+    if (num_events == 0) {
+        // This case should be impossible but is added just in case
+        return ERROR_POLL_DETECTED_0_EVENTS;
+    } else {
+        int pollin_happened = pfds[0].revents & POLLIN;
+
+        if (pfds[0].revents & POLLIN){ // stdin has been written. We return to go to "getline()"
+            return STATUS_OK;
+        }
+
+        else if (pfds[1].revents & POLLIN){// sockfd has been written. 
+        // We read socket for message. This is a case where the server send us a message when we are
+        // deciding something from the UI. This case only can happen on:
+            return receive_invitation_from_timeout(sockfd, context);
+        }else {
+            return ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM;
+        }
+    }
+
+    return STATUS_OK;
+}
+
+// General poll function. Polls for sockfd for 5 seconds and copies the result of data readed in "data_stream"
+status_t poll_tcp_message(int sockfd, string *data_stream){
+
+    char c_response[BUFFER_SIZE];
+    string response;
+
+    memset(c_response, 0, strlen(c_response));
+
+    struct pollfd pfds[1]; // We monitor sockfd
+
+    pfds[0].fd = sockfd;        // Sock input
+    pfds[0].events = POLLIN;    // Tell me when ready to read
+
+    int num_events = poll(pfds, 1, 5000); // We pool for 5 sec.
+
+    if (num_events == 0) {
+        (*data_stream) == ""; // We do not return anything
+    } else {
+        int pollin_happened = pfds[0].revents & POLLIN;
+
+        if (pfds[0].revents & POLLIN){ // Sockfd has been written
+
+            int bytes = recv(sockfd, c_response, sizeof(c_response), 0);
+
+            if (bytes < 0)
+                return ERROR_RECEIVING_MESSAGE;
+
+            (*data_stream) = c_response;
+            return STATUS_OK;
+
+        }else {
+            return ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM;
+        }
+    }
+    return STATUS_OK;
+}
+
+status_t receive_invitation_from_timeout(int sockfd,context_t *context){
+
     return STATUS_OK;
 }
 
 status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_message)
 {   
     struct pollfd pfds[2]; // We monitor sockfd and stdin
+
 
     *stdin_message = "";
     *socket_message = "";

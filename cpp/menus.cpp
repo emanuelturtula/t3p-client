@@ -526,5 +526,43 @@ bool parse_list_of_players(string players, vector<string> *parsedPlayers)
         (*parsedPlayers).push_back(players.substr(0));
         return true;  
     }
+  
     return false; 
+}
+
+status_t ready_to_play_context_setup(int sockfd, context_t *context, MatchInfo *matchInfo){
+
+    status_t status;
+    string first_turn;
+    T3PServerMessages t3pserverMessage;
+    matchInfo->clearSlots(); // we set a empty MatchInfo
+    matchInfo->playerSymbol = EMPTY;
+
+    cout << "Beginning new MATCH" << endl;
+
+    // Here we should get a first TURN:
+    if ( (status = poll_tcp_message(sockfd,&first_turn)) != STATUS_OK)
+        return status;
+
+    if( (status = t3pserverMessage.parse_buffer(first_turn)) != STATUS_OK)
+        return status;
+
+    if (first_turn == ""){
+        return ERROR_READY_TO_PLAY_MATCH_NOT_SET_FROM_SERVER;
+    }
+
+    // Here we check wich turn is it and we set up "matchInfo"
+    if(t3pserverMessage.getName() == "TURNPLAY"){ // We are cross
+        matchInfo->playerSymbol = CROSS;
+        (*context) = TURNPLAY;
+
+    } else if (t3pserverMessage.getName() == "TURNWAIT"){ // We are circle
+        matchInfo->playerSymbol = CIRCLE;
+        (*context) = TURNWAIT;
+    }
+    else{
+        (*context) = LOBBY_MENU;
+        return ERROR_READY_TO_PLAY_MATCH_NOT_SET_FROM_SERVER;
+    }
+    return STATUS_OK;
 }
