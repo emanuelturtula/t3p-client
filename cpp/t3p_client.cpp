@@ -11,7 +11,7 @@ status_t t3p_client()
     string playerName = "edturtu";
     string invitationhost;
     int connectedSockfd;
-    while (context != LOGOUT_CONTEXT)
+    while (context != CLOSE_PROGRAM)
     {
         switch(context)
         {
@@ -48,36 +48,37 @@ status_t t3p_client()
                     context = LOBBY_MENU;
                 break;
             case LOBBY_MENU:
-                if ((status = lobby_menu(connectedSockfd,&context, &invitationhost)) != STATUS_OK) 
+                if ((status = lobby_menu(&context, connectedSockfd)) != STATUS_OK) 
                 {
                     // Handle error
                 }
                 break;
-
-            case INVITATIONFROM:
-               if ((status = invitation_from_menu(connectedSockfd,&context, invitationhost)) != STATUS_OK)
-               {
-
-                   // Handle error
-               }
-
-            case SEND_INVITE:
-                
+            case SEND_INVITE_MENU:
                 // go to invite menu
+                if ((status = invite_menu(&context, server, playerName, connectedSockfd)) != STATUS_OK) 
+                {
+                    // Handle error
+                }
                 break;
-            case SEND_RANDOMINVITE:
+            case SEND_RANDOMINVITE_MENU:
                 // go to random invite menu
+                if ((status = random_invite_menu(&context, connectedSockfd)) != STATUS_OK) 
+                {
+                    // Handle error
+                }
                 break;      
-            case SEARCH_PLAYERS:
-                // go to search players menu
+            case READY_TO_PLAY:
                 break;
             case IN_A_GAME:
                 //TODO
                 break;
-            default:
-                context = LOBBY_MENU;
-
-            
+            case LOGOUT_CONTEXT:
+                if ((status = logout(&connectedSockfd)) != STATUS_OK) 
+                {
+                    // Handle error
+                }
+                context = MAIN_MENU;
+                break;
         }   
     }
 
