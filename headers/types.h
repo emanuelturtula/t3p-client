@@ -66,10 +66,7 @@ enum context_t {
     LOGOUT_CONTEXT,
     IN_A_GAME,
     READY_TO_PLAY,
-    CTURNWAIT,
-    CTURNPLAY,
     CLOSE_PROGRAM
-
 };
 
 class Server {
@@ -91,7 +88,18 @@ class T3PResponse {
         list<string> dataList; 
 };
 
-
+class T3PServerMessages{
+    private:
+        string name;
+        list<string> dataList;
+    public:
+        T3PServerMessages();
+        void clear();
+        void addData(string data);
+        status_t parse_buffer(string dataStream);
+        status_t setName(string name);
+        string getName();
+};
 
 class Slot {
     public:
@@ -116,18 +124,14 @@ class MatchInfo {
     private:
     vector<MatchSlot> slots;
     
-
     public:
         MatchInfo();
         MatchSlot playerSymbol;
         string circlePlayer = "";
         string crossPlayer = "";
         void clearSlots();
-
-
+        bool myTurn;
 };
-
-
 
 class T3PCommand {
     public:

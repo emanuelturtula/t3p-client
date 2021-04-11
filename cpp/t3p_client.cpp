@@ -11,13 +11,9 @@ status_t t3p_client()
     string playerName = "edturtu";
     string invitationhost;
     int connectedSockfd;
-
     MatchInfo matchInfo;
 
-
-
     while (context != CLOSE_PROGRAM)
-
     {
         switch(context)
         {
@@ -76,8 +72,6 @@ status_t t3p_client()
             case IN_A_GAME:
                 //TODO
                 break;
-
-
             case READY_TO_PLAY:
                 //Here we begin a new game. We must wait until we receive the first TURN.
                 //We set up everything to begin.
@@ -85,7 +79,7 @@ status_t t3p_client()
                 {
                     // Handle error
                 }
-
+                break;
             case LOGOUT_CONTEXT:
                 if ((status = logout(&connectedSockfd)) != STATUS_OK) 
                 {
@@ -96,7 +90,6 @@ status_t t3p_client()
             default:
                 cout << "Context unknown. Returning to LOBBY" << endl;
                 context = LOBBY_MENU;
-
         }   
     }
 

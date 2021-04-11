@@ -291,6 +291,7 @@ status_t invite_menu(context_t *context, Server server, string myPlayerName, int
      */
     string selection = "";
     status_t status;
+    string argument;
     T3PResponse t3pResponse;
     string availablePlayers;
     string invitePlayerName;
@@ -348,11 +349,12 @@ status_t invite_menu(context_t *context, Server server, string myPlayerName, int
                 if (socket_message != "")
                 {
                     // If an invitefrom arrives, we want to decline it, as our intention is to invite another player in this context
-                    if (socket_message.find("|") != string::npos)
+                    switch(parse_tcp_command(socket_message, &argument))
                     {
-                        if (socket_message.substr(0, socket_message.find("|")) == "INVITEFROM")
+                        case INVITEFROM:
                             send_tcp_message(connectedSockfd, "DECLINE \r\n \r\n");
-                    } 
+                            break;
+                    }
                 }
                 if (invitePlayerName != "")
                 {
@@ -445,53 +447,42 @@ status_t received_invite_menu(context_t *context, int connectedSockfd, string in
 status_t random_invite_menu(context_t *context, int connectedSockfd)
 {
     status_t status;
-    T3PResponse t3pResponse;
     T3PCommand t3pCommand;
-    tcpcommand_t command;
     *context = SEND_RANDOMINVITE_MENU;
     system("clear");
 
     cout << RANDOMINVITE_MENU_TITLE << endl;
     cout << "Sending random invite message..." << endl;
-    if ((status = send_tcp_message(connectedSockfd, "RANDOMINVITE \r\n \r\n")) != STATUS_OK)
-        return status;
-    if ((status = receive_tcp_message(connectedSockfd, &t3pResponse)) != STATUS_OK)
-        return status;
-    if (t3pResponse.statusMessage != "OK")
+    if ((status = random_invite(connectedSockfd, &t3pCommand)) != STATUS_OK)
     {
-        (*context) = LOBBY_MENU;
-        cerr << "There was an error sending the invitation. Going back to lobby";
+        if (status == INFO_NO_PLAYERS_AVAILABLE)
+            cout << "No players available" << endl;
+        else
+            cerr << "Error. Random invite failed" << endl;
+        *context = LOBBY_MENU;
         sleep(2);
-        return STATUS_OK;
-    }
-    cout << "Requested random invitation correctly. Waiting for a player to respond..." << endl;
-    if ((status = receive_tcp_command(connectedSockfd, &t3pCommand)) != STATUS_OK)
         return status;
-
-    if (t3pCommand.command == "INVITATIONTIMEOUT")
-    {
-        cout << "Nobody answered. Going back to lobby";
-        (*context) = LOBBY_MENU;
-        sleep(2);
     }
-    else if (t3pCommand.command == "ACCEPT")
+        
+    if (t3pCommand.command == "ACCEPT")
     {
-        cout << "A player accepted!";
+        cout << "A player accepted!" << endl;
         (*context) = READY_TO_PLAY;
         sleep(2);
     }
-    else if (t3pCommand.command == "DECLINE")
+    else if (t3pCommand.command == "DECLINE") 
     {
-        cout << "The invited player declined the invitation :(. Going back to lobby";
+        cout << "The invited player declined the invitation :(. Going back to lobby" << endl;
         (*context) = LOBBY_MENU;
         sleep(2);
     }
-    else
+    else 
     {
-        cerr << "Error. This command is unknown. Going back to lobby";
+        cerr << "Error. This command is unknown. Going back to lobby" << endl;
         (*context) = LOBBY_MENU;
         sleep(2);
     }
+
     return STATUS_OK;
 }
 
@@ -541,7 +532,7 @@ status_t ready_to_play_context_setup(int sockfd, context_t *context, MatchInfo *
     cout << "Beginning new MATCH" << endl;
 
     // Here we should get a first TURN:
-    if ( (status = poll_tcp_message(sockfd,&first_turn)) != STATUS_OK)
+    if ( (status = poll_tcp_message(sockfd, &first_turn)) != STATUS_OK)
         return status;
 
     if( (status = t3pserverMessage.parse_buffer(first_turn)) != STATUS_OK)
@@ -552,13 +543,15 @@ status_t ready_to_play_context_setup(int sockfd, context_t *context, MatchInfo *
     }
 
     // Here we check wich turn is it and we set up "matchInfo"
-    if(t3pserverMessage.getName() == "TURNPLAY"){ // We are cross
-        matchInfo->playerSymbol = CROSS;
-        (*context) = CTURNPLAY;
-
-    } else if (t3pserverMessage.getName() == "TURNWAIT"){ // We are circle
+    if(t3pserverMessage.getName() == "TURNPLAY"){ // We are circle (circle starts)
         matchInfo->playerSymbol = CIRCLE;
-        (*context) = CTURNWAIT;
+        matchInfo->myTurn = true;
+        *context = IN_A_GAME;
+
+    } else if (t3pserverMessage.getName() == "TURNWAIT"){ // We are cross
+        matchInfo->playerSymbol = CROSS;
+        matchInfo->myTurn = false;
+        *context = IN_A_GAME;
     }
     else{
         (*context) = LOBBY_MENU;

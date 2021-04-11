@@ -188,18 +188,28 @@ status_t invite(int sockfd, string player_name, bool *response)
     return STATUS_OK;
 }
 
-status_t random_invite(int sockfd)
+status_t random_invite(int sockfd, T3PCommand *t3pCommand)
 {
     T3PResponse t3pResponse;
     const char *message = "RANDOMINVITE \r\n \r\n";
+    
+    // Send the invite
     if (send_tcp_message(sockfd, message) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
 
+    // Read the 200 OK
     if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
         return ERROR_RECEIVING_MESSAGE;
 
+    if (t3pResponse.statusCode == "101")
+        return INFO_NO_PLAYERS_AVAILABLE;
+
     if (t3pResponse.statusMessage != "OK")
         return ERROR_STATUS_MESSAGE;
+
+    // Wait for answer
+    if (receive_tcp_command(sockfd, t3pCommand) != STATUS_OK)
+        return ERROR_RECEIVING_MESSAGE;
     
     return STATUS_OK;
 }
@@ -315,9 +325,20 @@ status_t parse_tcp_message(string response, T3PResponse *t3pResponse)
 status_t receive_tcp_command(int sockfd, T3PCommand *t3pCommand)
 {
     status_t status;
+    int read_bytes;
+    int strip_bytes = 0;
     (*t3pCommand).clear();
+    string socket_message;
     char message[BUFFER_SIZE] = {0};
-    int bytes = recv(sockfd, message, sizeof(message), 0);
+    if ((status = peek_tcp_buffer(sockfd, &read_bytes, &socket_message)) != STATUS_OK)
+        return status;
+
+    int pos;
+    if ((pos = socket_message.find_first_of(" \r\n \r\n")) != string :: npos)
+        strip_bytes = pos + strlen(" \r\n \r\n");
+        
+    int bytes = recv(sockfd, message, strip_bytes, 0);
+
     if (bytes > 0)
     {
         if (parse_tcp_command(string(message), t3pCommand) != STATUS_OK)
@@ -325,6 +346,15 @@ status_t receive_tcp_command(int sockfd, T3PCommand *t3pCommand)
         t3pCommand->isNewCommand = true;
     }
     return STATUS_OK;   
+}
+
+status_t peek_tcp_buffer(int sockfd, int *read_bytes, string *socket_message)
+{
+    char message[BUFFER_SIZE] = {0};
+    if ((*read_bytes = recv(sockfd, message, sizeof(message), MSG_PEEK)) < 0)
+        return ERROR_RECEIVING_MESSAGE;
+    *socket_message = message;
+    return STATUS_OK;
 }
 
 status_t parse_tcp_command(string message, T3PCommand *t3pCommand)
@@ -380,42 +410,6 @@ status_t giveup(int sockfd)
     return STATUS_OK;
 }
 
-
-status_t poll_tcp_message_invitationtimeout_or_stdin(int sockfd, context_t *context){
-
-    status_t status;
-    struct pollfd pfds[2]; // We monitor 2 things: sockfd and stdin
-
-    pfds[0].fd = 0;          // Standard input
-    pfds[0].events = POLLIN; // Tell me when ready to read
-
-    pfds[1].fd = sockfd; // Some socket descriptor
-    pfds[1].events = POLLIN;  // Tell me when ready to read
-
-    int num_events = poll(pfds, 2, -1); //We pool forever
-
-    if (num_events == 0) {
-        // This case should be impossible but is added just in case
-        return ERROR_POLL_DETECTED_0_EVENTS;
-    } else {
-        int pollin_happened = pfds[0].revents & POLLIN;
-
-        if (pfds[0].revents & POLLIN){ // stdin has been written. We return to go to "getline()"
-            return STATUS_OK;
-        }
-
-        else if (pfds[1].revents & POLLIN){// sockfd has been written. 
-        // We read socket for message. This is a case where the server send us a message when we are
-        // deciding something from the UI. This case only can happen on:
-            return receive_invitation_from_timeout(sockfd, context);
-        }else {
-            return ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM;
-        }
-    }
-
-    return STATUS_OK;
-}
-
 // General poll function. Polls for sockfd for 5 seconds and copies the result of data readed in "data_stream"
 status_t poll_tcp_message(int sockfd, string *data_stream){
 
@@ -450,11 +444,6 @@ status_t poll_tcp_message(int sockfd, string *data_stream){
             return ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM;
         }
     }
-    return STATUS_OK;
-}
-
-status_t receive_invitation_from_timeout(int sockfd,context_t *context){
-
     return STATUS_OK;
 }
 
