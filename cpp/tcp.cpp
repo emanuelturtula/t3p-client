@@ -266,6 +266,13 @@ status_t send_invitation_response(int sockfd, bool response){
     return send_tcp_message(sockfd, message.c_str()); //returns status_t of function send_tcp_message()
 }
 
+status_t markslot(int sockfd, string slot)
+{
+    string message = "MARKSLOT|" + slot + " \r\n \r\n";
+    if (send_tcp_message(sockfd, message) != STATUS_OK)
+        return ERROR_SENDING_MESSAGE;
+}
+
 
 /**
  * Internal functions

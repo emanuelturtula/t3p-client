@@ -517,7 +517,7 @@ bool parse_list_of_players(string players, vector<string> *parsedPlayers)
         (*parsedPlayers).push_back(players.substr(0));
         return true;  
     }
-  
+
     return false; 
 }
 
@@ -565,4 +565,64 @@ status_t ready_to_play_context_setup(int sockfd, context_t *context, MatchInfo *
         return ERROR_READY_TO_PLAY_MATCH_NOT_SET_FROM_SERVER;
     }
     return STATUS_OK;
+}
+
+status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo)
+{
+    status_t status;
+    string stdin_message;
+    string socket_message;
+    string message;
+    int slot_number;
+    *context = IN_A_GAME;
+    while (*context = IN_A_GAME)
+    {
+        // print the board
+        if (matchInfo.myTurn)
+        {
+            // If it is my turn, I need to tell the player to enter a slot number
+            if ((status = poll_event(sockfd, &stdin_message, &socket_message)) != STATUS_OK)
+            {
+                // Handle error
+            }  
+            if (socket_message != "")
+            {
+                // If we got here, probably it's because we lost due to timeout. Also it could happen
+                // that the other player got disconnected so it's a connection lost message.
+            }
+            else if (stdin_message != "")
+            {
+                // If the entered message is different from a number from 1 to 9, tell the user that
+                // it is wrong
+                if ((stdin_message.size() > 1) || (stdin_message.find_first_not_of("123456789") != string::npos))
+                {
+                    //in this condition, is a bad message.
+                } 
+                else
+                {
+                    slot_number = stoi(stdin_message);
+                    if (matchInfo.getSlots()[slot_number] != EMPTY)
+                    {
+                        // If the slot is not empty, then print bad slot
+                    }
+                    else 
+                    {
+                        if ((status = markslot(sockfd, stdin_message)) != STATUS_OK)
+                        {
+                            // handle error
+                        }
+                        else
+                        {
+
+                        }
+                    }
+                }
+                
+            }
+        }
+        else
+        {
+
+        }
+    }
 }

@@ -132,6 +132,7 @@ class MatchInfo {
         bool myTurn;
         void clearSlots();
         void parseSlots(string circleSlots, string crossSlots);
+        vector<MatchSlot> getSlots();
 };
 
 class T3PCommand {

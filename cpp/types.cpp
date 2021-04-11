@@ -115,3 +115,8 @@ void MatchInfo :: parseSlots(string circleSlots, string crossSlots)
         }
     }
 }
+
+vector<MatchSlot> MatchInfo :: getSlots()
+{
+    return this->slots;
+}
