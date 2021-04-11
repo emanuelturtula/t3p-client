@@ -613,7 +613,7 @@ status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo)
                         }
                         else
                         {
-
+                            
                         }
                     }
                 }

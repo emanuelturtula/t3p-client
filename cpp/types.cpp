@@ -95,6 +95,41 @@ void MatchInfo :: clearSlots()
     }
 }
 
+/*Prints Slots in next format example:
+ o | - | x 
+-----------
+   | x |   
+-----------
+   | x |   
+*/
+void MatchInfo::printSlots(){
+
+    size_t line = 1;
+
+    cout << "Current state of Game:" << endl << "===========" << endl;
+
+    for (size_t line = 1; line <3+1; line ++){
+        for (size_t i = 0+((line-1)*3); i < line*3; i++){
+    
+            if(this->slots[i] == CIRCLE)
+                cout << " o ";
+            
+            else if(this->slots[i] == CROSS)
+                cout << " x ";
+    
+            else 
+                cout << "   ";
+    
+            if (i != 2 && i != 5 && i !=8)
+                cout << "|";
+            else
+                cout << endl;
+        }
+    }
+    
+    cout << "===========" << endl << endl;
+}
+
 void MatchInfo :: parseSlots(string circleSlots, string crossSlots)
 {
     int idx;

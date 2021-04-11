@@ -268,9 +268,16 @@ status_t send_invitation_response(int sockfd, bool response){
 
 status_t markslot(int sockfd, string slot)
 {
+    T3PResponse t3pResponse;
+    T3PCommand t3pCommand;
     string message = "MARKSLOT|" + slot + " \r\n \r\n";
-    if (send_tcp_message(sockfd, message) != STATUS_OK)
+    if (send_tcp_message(sockfd, message.c_str()) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
+    
+    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
+        return ERROR_RECEIVING_MESSAGE;
+    
+    return T3PStatusCodeMapper[t3pResponse.statusCode];
 }
 
 

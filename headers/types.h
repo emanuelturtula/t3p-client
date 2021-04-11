@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <list>
 #include <map>
@@ -129,6 +130,8 @@ class MatchInfo {
         MatchSlot playerSymbol;
         string circlePlayer = "";
         string crossPlayer = "";
+        void printSlots();
+
         bool myTurn;
         void clearSlots();
         void parseSlots(string circleSlots, string crossSlots);
@@ -154,4 +157,11 @@ enum tcpcommand_t {
     MATCHEND
 };
 
-
+map<string, status_t> T3PStatusCodeMapper {
+    {"200", STATUS_OK},
+    {"400", ERROR_BAD_REQUEST},
+    {"405", ERROR_BAD_SLOT},
+    {"406", ERROR_NOT_TURN},
+    {"408", ERROR_COMMAND_OUT_OF_CONTEXT},
+    {"500", ERROR_SERVER_ERROR}
+};

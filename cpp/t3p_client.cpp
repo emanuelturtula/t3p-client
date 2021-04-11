@@ -13,6 +13,8 @@ status_t t3p_client()
     int connectedSockfd;
     MatchInfo matchInfo;
 
+    
+
     while (context != CLOSE_PROGRAM)
     {
         switch(context)
