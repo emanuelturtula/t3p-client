@@ -79,6 +79,8 @@ void Slot :: clear()
 MatchInfo :: MatchInfo()
 {
     int i;
+    this->playerSymbol = EMPTY;
+    this->myTurn = false;
     this->slots.resize(9);
     this->clearSlots();
 }
@@ -126,5 +128,26 @@ void MatchInfo::printSlots(){
     }
     
     cout << "===========" << endl << endl;
+}
+
+void MatchInfo :: parseSlots(string circleSlots, string crossSlots)
+{
+    int idx;
+    if (circleSlots != "")
+    {
+        for (char& c : circleSlots)
+        {
+            idx = (int)c - 49;
+            this->slots[idx] = CIRCLE;
+        }
+    }
+    if (crossSlots != "")
+    {
+        for (char& c : crossSlots)
+        {
+            idx = (int)c - 49;
+            this->slots[idx] = CROSS;
+        }
+    }
 
 }

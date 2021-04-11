@@ -130,9 +130,11 @@ class MatchInfo {
         MatchSlot playerSymbol;
         string circlePlayer = "";
         string crossPlayer = "";
-        void clearSlots();
         void printSlots();
+
         bool myTurn;
+        void clearSlots();
+        void parseSlots(string circleSlots, string crossSlots);
 };
 
 class T3PCommand {

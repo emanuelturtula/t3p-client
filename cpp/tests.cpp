@@ -10,7 +10,7 @@ using namespace std;
 status_t run_test_udp();
 status_t run_test_tcp();
 status_t run_test_menus();
-
+status_t test_mark_slots();
 
 status_t run_tests()
 {
@@ -22,6 +22,9 @@ status_t run_tests()
     #endif
     #ifdef DEBUG_TCP
         return run_test_tcp();
+    #endif
+    #ifdef DEBUG_MATCH
+        return test_mark_slots();
     #endif
     return STATUS_OK;
 }
@@ -62,6 +65,12 @@ status_t run_test_menus()
     return status;
 }
 
+status_t test_mark_slots()
+{
+    MatchInfo match;
+    match.parseSlots("123", "456");
+    return STATUS_OK;
+}
 // status_t run_test_tcp()
 // {
 //     status_t status;
