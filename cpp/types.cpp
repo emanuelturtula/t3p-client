@@ -125,6 +125,7 @@ void MatchInfo::printSlots(){
             else
                 cout << endl;
         }
+        cout << "------------" << endl;
     }
     
     cout << "===========" << endl << endl;
