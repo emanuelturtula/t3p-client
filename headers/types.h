@@ -26,6 +26,7 @@ enum status_t {
     ERROR_POLL_DETECTED_0_EVENTS,
     ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM,
     ERROR_NOT_RECIVIED_INVTEFROM,
+    ERROR_READY_TO_PLAY_MATCH_NOT_SET_FROM_SERVER,
 
     ERROR_NULL_POINTER,
 
@@ -127,9 +128,11 @@ enum MatchStatus{
 class MatchInfo {
     private:
     vector<MatchSlot> slots;
+    
 
     public:
         MatchInfo();
+        MatchSlot playerSymbol;
         string circlePlayer = "";
         string crossPlayer = "";
         void clearSlots();

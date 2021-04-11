@@ -23,6 +23,7 @@ class T3PServerMessages{
         void addData(string data);
         status_t read_buffer(string dataStream);
         status_t setName(string name);
+        string getName();
 };
 
 
@@ -40,6 +41,7 @@ status_t send_tcp_message(int sockfd, const char *message);
 status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse);
 status_t parse_tcp_message(string response, T3PResponse *t3pResponse);
 
+status_t poll_tcp_message(int sockfd, string *data_stream);
 status_t poll_tcp_message_invitationtimeout_or_stdin(int sockfd, context_t *context);
 status_t poll_tcp_message_invitationfrom_or_stdin(int sockfd, context_t *context,string *invitationhost);
 

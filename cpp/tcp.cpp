@@ -24,6 +24,10 @@ T3PServerMessages :: T3PServerMessages()
     this->dataList.clear();
 }
 
+string T3PServerMessages::getName(){
+    return this->name;
+}
+
 void T3PServerMessages :: clear()
 {
     this->name = "";
@@ -355,15 +359,49 @@ status_t poll_tcp_message_invitationtimeout_or_stdin(int sockfd, context_t *cont
         else if (pfds[1].revents & POLLIN){// sockfd has been written. 
         // We read socket for message. This is a case where the server send us a message when we are
         // deciding something from the UI. This case only can happen on:
-        // INVITATIONTIMEOUT
-        // INVITATIONFROM
-        // TIMEOUTWIN/TIMEOUTLOSE
             return receive_invitation_from_timeout(sockfd, context);
         }else {
             return ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM;
         }
     }
 
+    return STATUS_OK;
+}
+
+// General poll function. Polls for sockfd for 5 seconds and copies the result of data readed in "data_stream"
+status_t poll_tcp_message(int sockfd, string *data_stream){
+
+    char c_response[BUFFER_SIZE];
+    string response;
+
+    memset(c_response, 0, strlen(c_response));
+
+    struct pollfd pfds[1]; // We monitor sockfd
+
+    pfds[0].fd = sockfd;        // Sock input
+    pfds[0].events = POLLIN;    // Tell me when ready to read
+
+    int num_events = poll(pfds, 1, 5000); // We pool for 5 sec.
+
+    if (num_events == 0) {
+        (*data_stream) == ""; // We do not return anything
+    } else {
+        int pollin_happened = pfds[0].revents & POLLIN;
+
+        if (pfds[0].revents & POLLIN){ // Sockfd has been written
+
+            int bytes = recv(sockfd, c_response, sizeof(c_response), 0);
+
+            if (bytes < 0)
+                return ERROR_RECEIVING_MESSAGE;
+
+            (*data_stream) = c_response;
+            return STATUS_OK;
+
+        }else {
+            return ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM;
+        }
+    }
     return STATUS_OK;
 }
 
