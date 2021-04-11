@@ -141,9 +141,16 @@ status_t login(Server server, string player_name, int *sockfd)
 
 status_t logout(int *sockfd)
 {
+    T3PResponse t3pResponse;
     const char *message = "LOGOUT \r\n \r\n";
     if (send_tcp_message(*sockfd, message) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
+
+    if (receive_tcp_message(*sockfd, &t3pResponse) != STATUS_OK)
+        return ERROR_SENDING_MESSAGE;
+    
+    if (t3pResponse.statusMessage != "OK")
+        return T3PStatusCodeMapper[t3pResponse.statusCode];
 
     connected = false;
     close(*sockfd);
@@ -479,8 +486,9 @@ status_t poll_tcp_message(int sockfd, string *data_stream){
 
 status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_message)
 {   
+    status_t status;
     struct pollfd pfds[2]; // We monitor sockfd and stdin
-
+    T3PCommand t3pCommand;
 
     *stdin_message = "";
     *socket_message = "";
@@ -500,12 +508,10 @@ status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_m
 
     if (pfds[1].revents & POLLIN)
     {
-        char c_response[BUFFER_SIZE];
-        memset(c_response, 0, strlen(c_response));
-        int bytes = recv(connectedSockfd, c_response, sizeof(c_response), 0);
-        if (bytes < 0)
-            return ERROR_RECEIVING_MESSAGE;
-        (*socket_message) = c_response;
+        if ((status = receive_tcp_command(connectedSockfd, &t3pCommand)) != STATUS_OK)
+            return status;
+
+        *socket_message = t3pCommand.command;
     }
 
     return STATUS_OK;

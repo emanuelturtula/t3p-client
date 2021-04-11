@@ -95,9 +95,10 @@ void MatchInfo :: clearSlots()
     }
 }
 
+
 /*Prints Slots in next format example:
  o | - | x 
------------
+-----------     
    | x |   
 -----------
    | x |   
@@ -125,13 +126,14 @@ void MatchInfo::printSlots(){
             else
                 cout << endl;
         }
-        cout << "------------" << endl;
+        if (line != 3)
+            cout << "------------" << endl;
     }
     
     cout << "===========" << endl << endl;
 }
 
-void MatchInfo :: parseSlots(string circleSlots, string crossSlots)
+void MatchInfo :: setSlots(string circleSlots, string crossSlots)
 {
     int idx;
     if (circleSlots != "")
@@ -156,3 +158,24 @@ vector<MatchSlot> MatchInfo :: getSlots()
 {
     return this->slots;
 }
+
+void MatchInfo :: printSlotsNumpad()
+{
+    
+    cout << "Please choose the next slot number to mark." << endl;
+    
+    cout << " 7 | 8 | 9 " << endl;
+    cout << "-----------" << endl;
+    cout << " 4 | 5 | 6 " << endl;
+    cout << "-----------" << endl;
+    cout << " 1 | 2 | 3 " << endl;
+}
+
+map<string, status_t> T3PStatusCodeMapper {
+    {"200", STATUS_OK},
+    {"400", ERROR_BAD_REQUEST},
+    {"405", ERROR_BAD_SLOT},
+    {"406", ERROR_NOT_TURN},
+    {"408", ERROR_COMMAND_OUT_OF_CONTEXT},
+    {"500", ERROR_SERVER_ERROR}
+};
