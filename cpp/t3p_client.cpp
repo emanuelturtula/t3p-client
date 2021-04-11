@@ -9,6 +9,7 @@ status_t t3p_client()
     context_t context = MAIN_MENU;
     Server server;
     string playerName = "edturtu";
+    string invitationhost;
     int connectedSockfd;
     while (context != CLOSE_PROGRAM)
     {

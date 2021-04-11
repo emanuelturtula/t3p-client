@@ -1,6 +1,9 @@
 #pragma once
 
 #include "../headers/types.h"
+#include <string.h>
+#include <chrono>
+#include "../headers/tcp.h"
 
 status_t main_menu(context_t *context);
 status_t search_local_servers_menu(context_t *context, Server *server);

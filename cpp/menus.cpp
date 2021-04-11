@@ -475,4 +475,3 @@ bool parse_list_of_players(string players, vector<string> *parsedPlayers)
     }
     return false; 
 }
-

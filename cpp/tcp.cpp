@@ -322,7 +322,6 @@ status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_m
             return ERROR_RECEIVING_MESSAGE;
         (*socket_message) = c_response;
     }
-        
 
     return STATUS_OK;
 }
@@ -349,4 +348,3 @@ tcpcommand_t parse_tcp_command(string socket_message, string *argument)
     else
         tcpCommand = socket_message.substr(0, socket_message.find(" \r\n"));
     return TCPCommandTranslator[tcpCommand];
-}
