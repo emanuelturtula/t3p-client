@@ -15,6 +15,7 @@ status_t t3p_client()
     MatchInfo matchInfo;
 
 
+
     while (context != CLOSE_PROGRAM)
 
     {
@@ -72,8 +73,6 @@ status_t t3p_client()
                     // Handle error
                 }
                 break;      
-            case READY_TO_PLAY:
-                break;
             case IN_A_GAME:
                 //TODO
                 break;
