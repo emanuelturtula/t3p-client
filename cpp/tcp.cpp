@@ -59,6 +59,7 @@ status_t T3PServerMessages::read_buffer(string dataStream){
 
     this->clear();
 
+
     if ((pos = dataStream.rfind(" \r\n \r\n")) == string::npos)
     return ERROR_BAD_REQUEST;
 
