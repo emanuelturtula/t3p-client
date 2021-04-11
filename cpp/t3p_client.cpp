@@ -72,8 +72,6 @@ status_t t3p_client()
                     // Handle error
                 }
                 break;      
-            case READY_TO_PLAY:
-                break;
             case IN_A_GAME:
                 //TODO
                 break;

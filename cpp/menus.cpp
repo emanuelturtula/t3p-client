@@ -554,11 +554,11 @@ status_t ready_to_play_context_setup(int sockfd, context_t *context, MatchInfo *
     // Here we check wich turn is it and we set up "matchInfo"
     if(t3pserverMessage.getName() == "TURNPLAY"){ // We are cross
         matchInfo->playerSymbol = CROSS;
-        (*context) = TURNPLAY;
+        (*context) = CTURNPLAY;
 
     } else if (t3pserverMessage.getName() == "TURNWAIT"){ // We are circle
         matchInfo->playerSymbol = CIRCLE;
-        (*context) = TURNWAIT;
+        (*context) = CTURNWAIT;
     }
     else{
         (*context) = LOBBY_MENU;
