@@ -235,9 +235,20 @@ status_t parse_tcp_message(string response, T3PResponse *t3pResponse)
 status_t receive_tcp_command(int sockfd, T3PCommand *t3pCommand)
 {
     status_t status;
+    int read_bytes;
+    int strip_bytes = 0;
     (*t3pCommand).clear();
+    string socket_message;
     char message[BUFFER_SIZE] = {0};
-    int bytes = recv(sockfd, message, sizeof(message), 0);
+    if ((status = peek_tcp_buffer(sockfd, &read_bytes, &socket_message)) != STATUS_OK)
+        return status;
+
+    int pos;
+    if ((pos = socket_message.find_first_of(" \r\n \r\n")) != string :: npos)
+        strip_bytes = pos + strlen(" \r\n \r\n");
+        
+    int bytes = recv(sockfd, message, strip_bytes, 0);
+
     if (bytes > 0)
     {
         if (parse_tcp_command(string(message), t3pCommand) != STATUS_OK)
@@ -245,6 +256,15 @@ status_t receive_tcp_command(int sockfd, T3PCommand *t3pCommand)
         t3pCommand->isNewCommand = true;
     }
     return STATUS_OK;   
+}
+
+status_t peek_tcp_buffer(int sockfd, int *read_bytes, string *socket_message)
+{
+    char message[BUFFER_SIZE] = {0};
+    if ((*read_bytes = recv(sockfd, message, sizeof(message), MSG_PEEK)) < 0)
+        return ERROR_RECEIVING_MESSAGE;
+    *socket_message = message;
+    return STATUS_OK;
 }
 
 status_t parse_tcp_command(string message, T3PCommand *t3pCommand)
