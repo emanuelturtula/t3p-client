@@ -16,6 +16,7 @@ status_t invite_menu(context_t *context, Server server, string myPlayerName, int
 status_t received_invite_menu(context_t *context, int connectedSockfd, string invitingPlayerName);
 status_t random_invite_menu(context_t *context, int connectedSockfd);
 
+
 #define LOBBY_MENU_TITLE "TicTacToe LOBBY\n----------------------------------\n\n"
 #define INVITE_MENU_TITLE "TicTacToe INVITE\n----------------------------------\n\n"
 #define MAIN_MENU_TITLE "TicTacToe MAIN MENU\n----------------------------------\n\n"

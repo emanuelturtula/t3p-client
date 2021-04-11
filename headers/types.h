@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <list>
 #include <map>
@@ -129,6 +130,8 @@ class MatchInfo {
         MatchSlot playerSymbol;
         string circlePlayer = "";
         string crossPlayer = "";
+        void printSlots();
+
         bool myTurn;
         void clearSlots();
         void parseSlots(string circleSlots, string crossSlots);
