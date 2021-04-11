@@ -79,6 +79,7 @@ status_t t3p_client()
                 {
                     // Handle error
                 }
+                break;
             case LOGOUT_CONTEXT:
                 if ((status = logout(&connectedSockfd)) != STATUS_OK) 
                 {

@@ -65,10 +65,7 @@ enum context_t {
     LOGOUT_CONTEXT,
     IN_A_GAME,
     READY_TO_PLAY,
-    TURNWAIT,
-    TURNPLAY,
     CLOSE_PROGRAM
-
 };
 
 class Server {
