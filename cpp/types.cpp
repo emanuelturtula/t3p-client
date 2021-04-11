@@ -60,3 +60,35 @@ list<string> parse_players_list(string players)
     playersList.push_back(players.substr(0));
     return playersList;
 }
+
+/**
+ * Methods for Slot
+ * */
+Slot :: Slot()
+{
+    this->available = true; 
+}
+
+void Slot :: clear()
+{
+    this->available = true;
+}
+
+/*Methods for MatchInformation*/
+
+MatchInfo :: MatchInfo()
+{
+    int i;
+    this->slots.resize(9);
+    this->clearSlots();
+}
+
+
+void MatchInfo :: clearSlots()
+{
+    int i;
+    for (i = 0; i < this->slots.size(); i++)
+    {
+        this->slots[i] = EMPTY;
+    }
+}

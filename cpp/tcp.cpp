@@ -18,6 +18,86 @@ bool connected = false;
 
 using namespace std;
 
+
+/**
+ * Methods for T3PCommand
+ * */
+T3PServerMessages :: T3PServerMessages()
+{
+    this->name = "";
+    this->dataList.clear();
+}
+
+string T3PServerMessages::getName(){
+    return this->name;
+}
+
+void T3PServerMessages :: clear()
+{
+    this->name = "";
+    this->dataList.clear();
+}
+
+void T3PServerMessages::addData(string data){
+    this->dataList.push_back(data);
+}
+
+status_t T3PServerMessages::setName(string name){
+
+    if( name.compare("INVITATIONTIMEOUT") == 0 ||
+        name.compare("INVITEFROM") == 0 ||
+        name.compare("TURNPLAY") == 0 ||
+        name.compare("TURNWAIT") == 0 ||
+        name.compare("MATCHEND") == 0){
+        this->name = name;
+    }else{
+        return ERROR_BAD_REQUEST;
+    }
+
+    return STATUS_OK;
+}
+
+status_t T3PServerMessages::parse_buffer(string dataStream){
+    size_t pos;
+    status_t status;
+
+    this->clear();
+
+
+    if ((pos = dataStream.rfind(" \r\n \r\n")) == string::npos)
+    return ERROR_BAD_REQUEST;
+
+    // Strip last \r\n
+    dataStream.erase(pos+3);
+
+    // If message contains "|", grab the first part as a command
+    if ((pos = dataStream.find("|")) != string::npos)
+    {
+
+        if (( status = this->setName(dataStream.substr(0, pos))) != STATUS_OK)
+        dataStream.erase(0, pos+1);
+        while ((pos = dataStream.find("|")) != string::npos || (pos = dataStream.find(" \r\n")) != string::npos)
+        {
+            this->addData(dataStream.substr(0, pos));
+            dataStream.erase(0, pos+1);
+        }
+    }
+    // else, the message should only contain the command
+    else 
+    {
+        //I must have it because we checked at the beginning
+        pos = dataStream.find(" \r\n");
+        this->setName(dataStream.substr(0, pos));
+    }
+        
+    return STATUS_OK;
+
+}
+
+/**
+ * END--------Methods for T3PCommand
+ * */
+
 status_t login(Server server, string player_name, int *sockfd)
 {
     struct sockaddr_in server_addr = {0};
@@ -320,12 +400,57 @@ status_t giveup(int sockfd)
     if (send_tcp_message(sockfd, message) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
 
+
+    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
+        return ERROR_RECEIVING_MESSAGE;
+
+    if (t3pResponse.statusMessage != "OK")
+        return ERROR_STATUS_MESSAGE;
+
+    return STATUS_OK;
+}
+
+// General poll function. Polls for sockfd for 5 seconds and copies the result of data readed in "data_stream"
+status_t poll_tcp_message(int sockfd, string *data_stream){
+
+    char c_response[BUFFER_SIZE];
+    string response;
+
+    memset(c_response, 0, strlen(c_response));
+
+    struct pollfd pfds[1]; // We monitor sockfd
+
+    pfds[0].fd = sockfd;        // Sock input
+    pfds[0].events = POLLIN;    // Tell me when ready to read
+
+    int num_events = poll(pfds, 1, 5000); // We pool for 5 sec.
+
+    if (num_events == 0) {
+        (*data_stream) == ""; // We do not return anything
+    } else {
+        int pollin_happened = pfds[0].revents & POLLIN;
+
+        if (pfds[0].revents & POLLIN){ // Sockfd has been written
+
+            int bytes = recv(sockfd, c_response, sizeof(c_response), 0);
+
+            if (bytes < 0)
+                return ERROR_RECEIVING_MESSAGE;
+
+            (*data_stream) = c_response;
+            return STATUS_OK;
+
+        }else {
+            return ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM;
+        }
+    }
     return STATUS_OK;
 }
 
 status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_message)
 {   
     struct pollfd pfds[2]; // We monitor sockfd and stdin
+
 
     *stdin_message = "";
     *socket_message = "";
