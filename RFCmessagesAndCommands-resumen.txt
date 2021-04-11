@@ -1,0 +1,67 @@
+
+<mensaje/comando>||<(quienLoManda)>||<Respuesta>
+
+
+UDP:
+DISCOVERBROADCAST|| (cliente)
+    Message format 	= DISCOVERBROADCAST CRLF CRLF
+    Response       	= <Status Code>|<Status Message>|<ServerIP> CRLF CRLF
+DISCOVER||(cliente)
+    DISCOVER|<Server IP Address> CRLF CRLF
+    Response       	= <Status Code>|<Status Message>|
+  <ListOfAvailablePlayers> CRLF
+  <ListOfOccupiedPlayers> CRLF CRLF
+
+
+TCP:
+    HEARTBEAT||(cliente -> Server)|| no tiene respuesta
+        Message format = HEARTBEAT CRLF CRLF
+    LOGIN||(cliente -> Server)
+        Message format = LOGIN|<Player Name> CRLF CRLF
+        Response       = <Status Code>|<Status Message> CRLF CRLF
+
+    LOGOUT||(cliente -> Server)
+        Message format = LOGOUT CRLF CRLF
+        Response       = <Status Code>|<Status Message> CRLF CRLF
+
+    INVITE||(cliente -> Server)
+        Message format = INVITE|<Another player name> CRLF CRLF
+        Response       = <Status Code>|<Status Message> CRLF CRLF
+
+    RANDOMINVITE||(cliente -> Server)
+        Message format = RANDOMINVITE CRLF CRLF
+        Response       = <Status Code>|<Status Message> CRLF CRLF
+
+++++INVITEFROM||(SERVER ---> cLIENTE)
+        Message format = INVITEFROM|<InvitationSender> CRLF CRLF
+        Response    = ACCEPT CRLF CRLF
+		            = DECLINE CRLF CRLF
+++++    ---->INVITATIONTIMEOUT||(SERVER -> cLIENTE)
+            Message format = INVITATIONTIMEOUT CRLF CRLF
+        ---->INVITATIONRESPONSE 
+            Message format  = ACCEPT CRLF CRLF
+		                    = DECLINE CRLF CRLF
+++++TURNPLAY/TURNWAIT
+        Message format = TURNPLAY|<SlotsOccupiedByX>|<SlotsOccupiedByO> CRLF CRLF
+            or
+        Message format = TURNWAIT|<SlotsOccupiedByX>|<SlotsOccupiedByO> CRLF CRLF
+        Response       = <Status Code>|<Status Message> CRLF CRLF
+
+        MARKSLOT
+            Message format = MARKSLOT|<SlotPosition> CRLF CRLF
+            Response       = <Status Code>|<Status Message> CRLF CRLF
+
+        GIVEUP
+            Message format = GIVEUP CRLF CRLF
+            Response       = <Status Code>|<Status Message> CRLF CRLF
+
+++++MATCHEND 
+        Message format = MATCHEND|<Status Message> CRLF CRLF
+
+	Status Messages
+		= YOUWIN [The player won the match]
+		= YOULOSE [The player lost the match]
+		= DRAW [The match ended in a draw]
+		= TIMEOUTWIN [The player won the match by timeout]
+		= TIMEOUTLOSE [The player lost the match by timeout]
+		= CONNECTIONLOST [One of the players has lost connection]

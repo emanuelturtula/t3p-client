@@ -12,6 +12,20 @@
 using namespace std;
 
 
+class T3PServerMessages{
+    
+    private:
+        string name;
+        list<string> dataList;
+    public:
+        T3PServerMessages();
+        void clear();
+        void addData(string data);
+        status_t read_buffer(string dataStream);
+        status_t setName(string name);
+};
+
+
 status_t login(Server server, string player_name, int *sockfd);
 status_t logout(int *sockfd);
 status_t invite(int sockfd, string player_name);

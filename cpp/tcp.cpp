@@ -15,6 +15,79 @@ bool connected = false;
 
 using namespace std;
 
+/**
+ * Methods for T3PCommand
+ * */
+T3PServerMessages :: T3PServerMessages()
+{
+    this->name = "";
+    this->dataList.clear();
+}
+
+void T3PServerMessages :: clear()
+{
+    this->name = "";
+    this->dataList.clear();
+}
+
+void T3PServerMessages::addData(string data){
+    this->dataList.push_back(data);
+}
+
+status_t T3PServerMessages::setName(string name){
+
+    if( name.compare("INVITATIONTIMEOUT") == 0 ||
+        name.compare("INVITEFROM") == 0 ||
+        name.compare("TURNPLAY") == 0 ||
+        name.compare("TURNWAIT") == 0 ||
+        name.compare("MATCHEND") == 0){
+        this->name = name;
+    }else{
+        return ERROR_BAD_REQUEST;
+    }
+
+    return STATUS_OK;
+}
+
+status_t T3PServerMessages::read_buffer(string dataStream){
+    size_t pos;
+    status_t status;
+
+    this->clear();
+
+    if ((pos = dataStream.rfind(" \r\n \r\n")) == string::npos)
+    return ERROR_BAD_REQUEST;
+
+    // Strip last \r\n
+    dataStream.erase(pos+3);
+
+    // If message contains "|", grab the first part as a command
+    if ((pos = dataStream.find("|")) != string::npos)
+    {
+
+        if (( status = this->setName(dataStream.substr(0, pos))) != STATUS_OK)
+        dataStream.erase(0, pos+1);
+        while ((pos = dataStream.find(" \r\n")) != string::npos)
+        {
+            this->addData(dataStream.substr(0, pos));
+            dataStream.erase(0, pos+3);
+        }
+    }
+    // else, the message should only contain the command
+    else 
+    {
+        //I must have it because we checked at the beginning
+        pos = dataStream.find(" \r\n");
+        this->addData(dataStream.substr(0, pos));
+    }
+        
+    return STATUS_OK;
+
+}
+
+/**
+ * END--------Methods for T3PCommand
+ * */
 
 
 status_t login(Server server, string player_name, int *sockfd)
