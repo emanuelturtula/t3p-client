@@ -348,3 +348,4 @@ tcpcommand_t parse_tcp_command(string socket_message, string *argument)
     else
         tcpCommand = socket_message.substr(0, socket_message.find(" \r\n"));
     return TCPCommandTranslator[tcpCommand];
+}

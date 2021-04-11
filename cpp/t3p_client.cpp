@@ -62,6 +62,10 @@ status_t t3p_client()
                 break;
             case SEND_RANDOMINVITE_MENU:
                 // go to random invite menu
+                if ((status = random_invite_menu(&context, connectedSockfd)) != STATUS_OK) 
+                {
+                    // Handle error
+                }
                 break;      
             case READY_TO_PLAY:
                 break;

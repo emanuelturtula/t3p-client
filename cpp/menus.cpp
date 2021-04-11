@@ -442,6 +442,59 @@ status_t received_invite_menu(context_t *context, int connectedSockfd, string in
     return STATUS_OK;
 }
 
+status_t random_invite_menu(context_t *context, int connectedSockfd)
+{
+    status_t status;
+    T3PResponse t3pResponse;
+    T3PCommand t3pCommand;
+    tcpcommand_t command;
+    *context = SEND_RANDOMINVITE_MENU;
+    system("clear");
+
+    cout << RANDOMINVITE_MENU_TITLE << endl;
+    cout << "Sending random invite message..." << endl;
+    if ((status = send_tcp_message(connectedSockfd, "RANDOMINVITE \r\n \r\n")) != STATUS_OK)
+        return status;
+    if ((status = receive_tcp_message(connectedSockfd, &t3pResponse)) != STATUS_OK)
+        return status;
+    if (t3pResponse.statusMessage != "OK")
+    {
+        (*context) = LOBBY_MENU;
+        cerr << "There was an error sending the invitation. Going back to lobby";
+        sleep(2);
+        return STATUS_OK;
+    }
+    cout << "Requested random invitation correctly. Waiting for a player to respond..." << endl;
+    if ((status = receive_tcp_command(connectedSockfd, &t3pCommand)) != STATUS_OK)
+        return status;
+
+    if (t3pCommand.command == "INVITATIONTIMEOUT")
+    {
+        cout << "Nobody answered. Going back to lobby";
+        (*context) = LOBBY_MENU;
+        sleep(2);
+    }
+    else if (t3pCommand.command == "ACCEPT")
+    {
+        cout << "A player accepted!";
+        (*context) = READY_TO_PLAY;
+        sleep(2);
+    }
+    else if (t3pCommand.command == "DECLINE")
+    {
+        cout << "The invited player declined the invitation :(. Going back to lobby";
+        (*context) = LOBBY_MENU;
+        sleep(2);
+    }
+    else
+    {
+        cerr << "Error. This command is unknown. Going back to lobby";
+        (*context) = LOBBY_MENU;
+        sleep(2);
+    }
+    return STATUS_OK;
+}
+
 bool scanAgain()
 {
     string selection;
