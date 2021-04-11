@@ -23,5 +23,6 @@ status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse);
 status_t receive_tcp_command(int sockfd, T3PCommand *t3pCommand);
 status_t parse_tcp_message(string response, T3PResponse *t3pResponse);
 status_t parse_tcp_command(string message, T3PCommand *t3pCommand);
-status_t check_tcp_command(T3PCommand t3pCommand, context_t context);
+tcpcommand_t parse_tcp_command(string socket_message, string *argument);
+status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_message);
 

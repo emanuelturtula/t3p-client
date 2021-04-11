@@ -47,14 +47,14 @@ status_t t3p_client()
                     context = LOBBY_MENU;
                 break;
             case LOBBY_MENU:
-                if ((status = lobby_menu(&context)) != STATUS_OK) 
+                if ((status = lobby_menu(&context, connectedSockfd)) != STATUS_OK) 
                 {
                     // Handle error
                 }
                 break;
             case SEND_INVITE_MENU:
                 // go to invite menu
-                if ((status = invite_menu(&context, server, playerName)) != STATUS_OK) 
+                if ((status = invite_menu(&context, server, playerName, connectedSockfd)) != STATUS_OK) 
                 {
                     // Handle error
                 }

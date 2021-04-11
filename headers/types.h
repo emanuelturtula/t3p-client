@@ -22,7 +22,7 @@ enum status_t {
     ERROR_STATUS_MESSAGE,
     ERROR_BAD_PLAYER_NAME,
     ERROR_OUT_OF_CONTEXT,
-
+    ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM,
     ERROR_NULL_POINTER,
 
     /*******************************/
@@ -61,21 +61,6 @@ enum context_t {
     CLOSE_PROGRAM
 };
 
-enum tcpcommand_t {
-    LOGIN,
-    LOGOUT,
-    INVITE,
-    HEARTBEAT,
-    ACCEPT,
-    DECLINE,
-    RANDOMINVITE,
-    MARKSLOT,
-    GIVEUP
-};
-
-
-
-
 class Server {
     public:
         Server();
@@ -103,3 +88,14 @@ class T3PCommand {
         bool isNewCommand = false;
         void clear();
 };
+
+enum tcpcommand_t {
+    INVITEFROM,
+    INVITATIONTIMEOUT,
+    ACCEPT,
+    DECLINE,
+    TURNPLAY,
+    TURNWAIT,
+    MATCHEND
+};
+

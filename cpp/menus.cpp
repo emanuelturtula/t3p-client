@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <list>
 #include <algorithm>
+#include <unistd.h>
 #include "../headers/types.h"
 #include "../headers/menus.h"
 #include "../headers/udp.h"
@@ -21,22 +22,20 @@ status_t main_menu(context_t *context)
      */
     string selection;
     *context = MAIN_MENU;
+    system("clear");
+    cout << MAIN_MENU_TITLE << endl;
     while ((*context) == MAIN_MENU)
     {
-        cout << "MAIN MENU" << endl;
         cout << "Please select one option" << endl;
         cout << "1 - Search local servers" << endl;
-        cout << "2 - Search by IP" << endl;
+        cout << "2 - Search by IP" << endl << endl;
         getline(cin, selection);
         if (selection.compare("1") == 0)
             (*context) = SEARCH_LOCAL_SERVERS;
         else if (selection.compare("2") == 0)
             (*context) = SEARCH_BY_IP;
         else 
-        {
-            system("clear");
             cerr << "Error. Not an option" << endl << endl;
-        }
     }
     return STATUS_OK;
 }
@@ -53,13 +52,12 @@ status_t search_local_servers_menu(context_t *context, Server *server)
     string selection;
     bool valid_choice = false;
     regex ip_checker("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
-
+    system("clear");
+    cout << SEARCH_LOCAL_SERVERS_MENU_TITLE << endl;
     while (*context != READY_TO_CONNECT)
     {
         t3pResponseList.clear();
         serverList.clear();
-        system("clear");
-        cout << "SEARCH LOCAL SERVERS MENU" << endl;
         cout << "Searching local servers" << endl;
         if ((status = send_discover_broadcast(&t3pResponseList)) != STATUS_OK)
         {
@@ -159,7 +157,7 @@ status_t search_by_ip_menu(context_t *context, Server *server)
     T3PResponse t3pResponse;
 
     system("clear");
-    cout << "SEARCH BY IP MENU" << endl;
+    cout << SEARCH_BY_IP_MENU_TITLE << endl;
     while (*context == SEARCH_BY_IP)
     {
         string ip;
@@ -202,7 +200,7 @@ status_t connect_menu(context_t *context, Server server)
     bool valid_choice;
     string choice;
     system("clear");
-    cout << "CONNECT MENU" << endl;
+    cout << CONNECT_MENU_TITLE << endl;
     while (*context == READY_TO_CONNECT)
     {
         cout << "Server " << server.ip << endl;
@@ -234,32 +232,54 @@ status_t connect_menu(context_t *context, Server server)
     return STATUS_OK;
 }
 
-status_t lobby_menu(context_t *context)
+status_t lobby_menu(context_t *context, int connectedSockfd)
 {
     /**
      * 
      */
+    status_t status;
     string selection;
+    string socket_message;
+    string invitingPlayerName;
     *context = LOBBY_MENU;
+    system("clear");
+    cout << LOBBY_MENU_TITLE << endl;
     while ((*context) == LOBBY_MENU)
     {
-        cout << "TicTacToe LOBBY" << endl;
         cout << "Please select one option" << endl;
         cout << "1 - Invite a Player" << endl;
         cout << "2 - Random Match" << endl;
-        cout << "3 - Logout" << endl;
-        getline(cin, selection);
-        if (selection.compare("1") == 0)
-            (*context) = SEND_INVITE_MENU;
-        else if (selection.compare("2") == 0)
-            (*context) = SEND_RANDOMINVITE_MENU;  
-        else if (selection.compare("3") == 0)
-            (*context) = LOGOUT_CONTEXT;                    
+        cout << "3 - Logout" << endl << endl;
+        poll_event(connectedSockfd, &selection, &socket_message);
+        if (socket_message != "")
+        {
+            switch (parse_tcp_command(socket_message, &invitingPlayerName))
+            {
+                case INVITEFROM:
+                    if ((status = received_invite_menu(context, connectedSockfd, invitingPlayerName)) != STATUS_OK)
+                    {
+                        // Handle error
+                    }
+                    if (*context == LOBBY_MENU)
+                    {
+                        system("clear");
+                        cout << LOBBY_MENU_TITLE << endl;
+                    }
+                    break;
+            }
+        }
         else 
         {
-            system("clear");
-            cerr << "Error. Not an option" << endl << endl;
+            if (selection.compare("1") == 0)
+                (*context) = SEND_INVITE_MENU;
+            else if (selection.compare("2") == 0)
+                (*context) = SEND_RANDOMINVITE_MENU;  
+            else if (selection.compare("3") == 0)
+                (*context) = LOGOUT_CONTEXT;                    
+            else 
+                cerr << "Error. Not an option\n\n" << endl << endl;
         }
+        
     }
     return STATUS_OK;
 }
@@ -269,67 +289,154 @@ status_t invite_menu(context_t *context, Server server, string myPlayerName, int
     /**
      * 
      */
-    string selection;
+    string selection = "";
     status_t status;
     T3PResponse t3pResponse;
     string availablePlayers;
     string invitePlayerName;
+    string socket_message;
     vector<string> availablePlayersList;
+    bool valid_input = false;
+
     *context = SEND_INVITE_MENU;
-    while ((*context) == SEND_INVITE_MENU)
+    system("clear");
+    cout << INVITE_MENU_TITLE << endl;
+    while (!valid_input)
     {
-        cout << "TicTacToe INVITE" << endl;
         if ((status = send_discover(server.ip, &t3pResponse)) != STATUS_OK)
         {
+            //Handle error
+        }
+        else 
+        {
+            availablePlayers = t3pResponse.dataList.front();   
+            if (!parse_list_of_players(availablePlayers, &availablePlayersList))
+            {
+                cout << "There are no players avaiable. Press any key to go back to Lobby menu" << endl;
+                poll_event(connectedSockfd, &selection, &socket_message);
+                (*context) = LOBBY_MENU;
+                valid_input = true;
+                return STATUS_OK;
+            }
             
-        }
-        availablePlayers = t3pResponse.dataList.front();   
-        if (!parse_list_of_players(availablePlayers, &availablePlayersList))
-        {
-            cout << "There are no players avaiable. Press any key to go back to Lobby menu" << endl;
-            (*context) = LOBBY_MENU;
-            return STATUS_OK;
-        }
-        cout << "List of available players: " << endl;
-        vector<string> :: iterator it = find(availablePlayersList.begin(), availablePlayersList.end(), myPlayerName);
-        availablePlayersList.erase(it);
+            vector<string> :: iterator it = find(availablePlayersList.begin(), availablePlayersList.end(), myPlayerName);
+            availablePlayersList.erase(it);
 
-        if (availablePlayersList.size() > 0)
+            if (availablePlayersList.size() > 0)
+            {
+                cout << "List of available players: " << endl;
+                for (auto const& player : availablePlayersList)
+                    cout << player << endl; 
+            }
+            else
+            {
+                cout << "There are no players avaiable. Press any key to go back to Lobby menu" << endl;
+                poll_event(connectedSockfd, &selection, &socket_message);
+                (*context) = LOBBY_MENU;
+                return STATUS_OK;
+            }
+
+            cout << "Please enter the player name or \\back to go back to Lobby menu" << endl;
+
+            // Pollin stdin and socket           
+            if (poll_event(connectedSockfd, &invitePlayerName, &socket_message) != STATUS_OK)
+            {
+                // Handle error
+            }
+            else 
+            {
+                if (socket_message != "")
+                {
+                    // If an invitefrom arrives, we want to decline it, as our intention is to invite another player in this context
+                    if (socket_message.find("|") != string::npos)
+                    {
+                        if (socket_message.substr(0, socket_message.find("|")) == "INVITEFROM")
+                            send_tcp_message(connectedSockfd, "DECLINE \r\n \r\n");
+                    } 
+                }
+                if (invitePlayerName != "")
+                {
+                    if (invitePlayerName == "\\back")
+                    {
+                        valid_input = true;
+                        *context = LOBBY_MENU;
+                    }
+                    else if (find(availablePlayersList.begin(), availablePlayersList.end(), invitePlayerName) != availablePlayersList.end())
+                    {
+                        bool response = false;
+                        status = invite(connectedSockfd, invitePlayerName, &response);
+                        switch (status)
+                        {
+                            case ERROR_BAD_PLAYER_NAME:
+                                cerr << "Error. Bad player name"; 
+                                break;
+                            case STATUS_OK:
+                                if (response)
+                                {
+                                    cout << invitePlayerName + " accepted the invitation" << endl;
+                                    (*context) = READY_TO_PLAY;
+                                }
+                                else
+                                {
+                                    cout << invitePlayerName + " declined the invitation" << endl;
+                                    (*context) = LOBBY_MENU;
+                                }
+                                sleep(2);
+                                valid_input = true;
+                                break;
+                            // TODO Add missing cases
+                            default: 
+                                break;
+                        }
+                    }
+                    else
+                        cerr << "Error. Player is not in the list" << endl << endl; 
+                }
+            }
+        }
+    }
+    return STATUS_OK;
+}
+
+status_t received_invite_menu(context_t *context, int connectedSockfd, string invitingPlayerName)
+{
+    string selection = "";
+    string argument;
+    string socket_message = "";
+    system("clear");
+    cout << RECEIVED_INVITE_MENU << endl;
+    cout << invitingPlayerName + " is inviting you to a match. Type Y to accept or N to decline.\n\n";
+    bool waiting_answer = true;
+    while (waiting_answer)
+    {
+        poll_event(connectedSockfd, &selection, &socket_message);
+        if (socket_message != "")
         {
-            cout << "List of available players: " << endl;
-            for (auto const& player : availablePlayersList)
-                cout << player << endl; 
+            switch(parse_tcp_command(socket_message, &argument))
+            {
+                case INVITATIONTIMEOUT:
+                    cout << "The invitation will be declined due to timeout" << endl;
+                    sleep(2);
+                    waiting_answer = false;
+                    break;
+            }
         }
         else
         {
-            cout << "There are no players avaiable. Press any key to go back to Lobby menu" << endl;
-            (*context) = LOBBY_MENU;
-            return STATUS_OK;
-        }
-
-        cout << "Please enter the player name or \\back to go back to Lobby menu" << endl;
-        getline(cin, invitePlayerName);
-        
-        if (find(availablePlayersList.begin(), availablePlayersList.end(), invitePlayerName) == availablePlayersList.end())
-            cerr << "Error. Player is not in the list" << endl << endl; 
-        else 
-        {
-            string message = "INVITE|" + invitePlayerName + " \r\n \r\n";
-            bool response = false;
-            status = invite(connectedSockfd, invitePlayerName, &response);
-            switch (status)
+            if (selection == "Y")
             {
-                case ERROR_BAD_PLAYER_NAME:
-                    cerr << "Error. Bad player name"; 
-                    break;
-                case STATUS_OK:
-                    
-                    break;
-                default: 
-                    break;
+                send_tcp_message(connectedSockfd, "ACCEPT \r\n \r\n");
+                waiting_answer = false;
+                *context = READY_TO_PLAY;
             }
-
-            // send invitation and wait for response.
+            else if (selection == "N")
+            {
+                send_tcp_message(connectedSockfd, "DECLINE \r\n \r\n");
+                waiting_answer = false;
+                *context = LOBBY_MENU;
+            }
+            else
+                cerr << "Error. Not an option." << endl;
         }
     }
     return STATUS_OK;
@@ -355,6 +462,7 @@ bool scanAgain()
 bool parse_list_of_players(string players, vector<string> *parsedPlayers)
 {
     size_t pos;
+    (*parsedPlayers).clear();
     if (players != "")
     {
         while ((pos = players.find("|")) != string::npos)
@@ -367,3 +475,4 @@ bool parse_list_of_players(string players, vector<string> *parsedPlayers)
     }
     return false; 
 }
+

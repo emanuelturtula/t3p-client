@@ -7,6 +7,9 @@
 #include <list>
 #include <mutex>
 #include <regex>
+#include <map>
+#include <poll.h>
+#include <iostream>
 #include "../headers/tcp.h"
 #include "../headers/types.h"
 
@@ -14,8 +17,6 @@ mutex msend;
 bool connected = false;
 
 using namespace std;
-
-
 
 status_t login(Server server, string player_name, int *sockfd)
 {
@@ -72,6 +73,7 @@ status_t logout(int *sockfd)
 status_t invite(int sockfd, string player_name, bool *response)
 {
     T3PResponse t3pResponse;
+    T3PCommand t3pCommand;
     const char *c_player_name = player_name.c_str();
     char message[BUFFER_SIZE];
     regex playerNameChecker("^[a-zA-Z]+$");
@@ -89,11 +91,19 @@ status_t invite(int sockfd, string player_name, bool *response)
     if (send_tcp_message(sockfd, message) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
 
+    // receive the 200|ok
     if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
         return ERROR_RECEIVING_MESSAGE;
 
     if (t3pResponse.statusMessage != "OK")
         return ERROR_STATUS_MESSAGE;
+
+    if (receive_tcp_command(sockfd, &t3pCommand) != STATUS_OK)
+        return ERROR_RECEIVING_MESSAGE;
+
+    *response = false;
+    if (t3pCommand.command == "ACCEPT")
+        *response = true;
 
     return STATUS_OK;
 }
@@ -154,7 +164,7 @@ void heartbeat_thread(int sockfd)
 /* According to variable "response" it sends an ACCEPT or DECLINE command.
     true = ACCEPT
     false = DECLINE*/
-status_t invitation_response(int sockfd,bool response){
+status_t send_invitation_response(int sockfd, bool response){
 
     status_t status;
     string message;
@@ -222,7 +232,7 @@ status_t parse_tcp_message(string response, T3PResponse *t3pResponse)
     return STATUS_OK;
 }
 
-status_t receive_tcp_command(int sockfd, T3PCommand *t3pCommand, context_t context)
+status_t receive_tcp_command(int sockfd, T3PCommand *t3pCommand)
 {
     status_t status;
     (*t3pCommand).clear();
@@ -232,8 +242,6 @@ status_t receive_tcp_command(int sockfd, T3PCommand *t3pCommand, context_t conte
     {
         if (parse_tcp_command(string(message), t3pCommand) != STATUS_OK)
             return ERROR_BAD_REQUEST;
-        if ((status = check_tcp_command(*t3pCommand, context)) != STATUS_OK)
-            return status;
         t3pCommand->isNewCommand = true;
     }
     return STATUS_OK;   
@@ -270,118 +278,6 @@ status_t parse_tcp_command(string message, T3PCommand *t3pCommand)
     return STATUS_OK;
 }
 
-status_t check_tcp_command(T3PCommand t3pCommand, context_t context)
-{
-    status_t status;
-    string playerName;
-    list<string> availablePlayers;
-    tcpcommand_t command;
-    // First we need to check if the incomming command is present
-    // in a list of possible commands.
-    if (find(TCPCommands.begin(), TCPCommands.end(), t3pCommand.command) == TCPCommands.end())
-        return ERROR_BAD_REQUEST;
-
-    // Translate the command to a tcpcommand type to ease the later code
-    command = TCPCommandTranslator[t3pCommand.command];
-    // Now that we know that the command actually exists, we need 
-    // to check based on the context if it is valid.
-    switch(context)
-    {
-        case SOCKET_CONNECTED:
-            switch(command)
-            {
-                case LOGIN:
-                    playerName = t3pCommand.dataList.front();
-                    if ((status = checkPlayerName(playerName)) != STATUS_OK)
-                        return status;
-                    if (checkPlayerIsOnline(playerName))
-                        return ERROR_NAME_TAKEN;
-                    break;
-                default:
-                    return ERROR_COMMAND_OUT_OF_CONTEXT;
-            }            
-            break;
-        case LOBBY:
-            switch(command)
-            {
-                case HEARTBEAT:
-                    break;
-                case INVITE:
-                    playerName = t3pCommand.dataList.front();
-                    if ((status = checkPlayerName(playerName)) != STATUS_OK)
-                        return status;
-                    if (!checkPlayerIsOnline(playerName))
-                        return ERROR_PLAYER_NOT_FOUND;
-                    if (!checkPlayerIsAvailable(playerName))
-                        return ERROR_PLAYER_OCCUPIED;
-                    break;
-                case RANDOMINVITE:
-                    availablePlayers = mainDatabase.getAvailablePlayers();
-                    if (availablePlayers.empty())
-                        return INFO_NO_PLAYERS_AVAILABLE;
-                    break;
-                case LOGOUT:
-                    break;
-                default:
-                    return ERROR_COMMAND_OUT_OF_CONTEXT;
-            }
-            break;
-        case WAITING_OTHER_PLAYER_RESPONSE:
-            switch(command)
-            {
-                case HEARTBEAT:
-                    break;
-                default: 
-                    return ERROR_COMMAND_OUT_OF_CONTEXT;
-            }
-            break;
-        case WAITING_RESPONSE:
-            switch(command)
-            {
-                case HEARTBEAT:
-                    break;
-                case ACCEPT:
-                    break;
-                case DECLINE:
-                    break;
-                default:
-                    return ERROR_COMMAND_OUT_OF_CONTEXT;
-            }
-            break;
-        case READY_TO_PLAY:
-            switch(command)
-            {
-                case HEARTBEAT:
-                    break;
-                default:
-                    return ERROR_COMMAND_OUT_OF_CONTEXT;
-            }
-            break;
-        case MATCH:
-            switch(command)
-            {
-                case HEARTBEAT:
-                    break;
-                case MARKSLOT:
-                    break;
-                case GIVEUP:
-                    break;
-                case OK:
-                    break;
-                case BAD:
-                    break;
-                default:
-                    return ERROR_COMMAND_OUT_OF_CONTEXT;
-            }
-            break;
-    }
-    return STATUS_OK;
-}
-
-
-/*need to check if the player is in the correct context first
-If the function return STATUS_OK we should change the context so the 
-player would leave the game*/
 status_t giveup(int sockfd)
 {
     T3PResponse t3pResponse;
@@ -394,11 +290,63 @@ status_t giveup(int sockfd)
     if (send_tcp_message(sockfd, message) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
 
-    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
-        return ERROR_RECEIVING_MESSAGE;
+    return STATUS_OK;
+}
 
-    if (t3pResponse.statusMessage != "OK")
-        return ERROR_STATUS_MESSAGE;
+status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_message)
+{   
+    struct pollfd pfds[2]; // We monitor sockfd and stdin
+
+    *stdin_message = "";
+    *socket_message = "";
+
+    pfds[0].fd = 0;        // Stdin input
+    pfds[0].events = POLLIN;    // Tell me when ready to read
+
+    pfds[1].fd = connectedSockfd;        // Sock input
+    pfds[1].events = POLLIN;    // Tell me when ready to read
+
+    int num_events = poll(pfds, 2, -1); // Wait until an event arrives
+
+    int pollin_happened = pfds[0].revents & POLLIN;
+
+    if (pfds[0].revents & POLLIN)
+        getline(cin, (*stdin_message));
+
+    if (pfds[1].revents & POLLIN)
+    {
+        char c_response[BUFFER_SIZE];
+        memset(c_response, 0, strlen(c_response));
+        int bytes = recv(connectedSockfd, c_response, sizeof(c_response), 0);
+        if (bytes < 0)
+            return ERROR_RECEIVING_MESSAGE;
+        (*socket_message) = c_response;
+    }
+        
 
     return STATUS_OK;
+}
+
+tcpcommand_t parse_tcp_command(string socket_message, string *argument)
+{
+    map<string, tcpcommand_t> TCPCommandTranslator = {
+        {"INVITEFROM", INVITEFROM},
+        {"INVITATIONTIMEOUT", INVITATIONTIMEOUT},
+        {"ACCEPT", ACCEPT},
+        {"DECLINE", DECLINE},
+        {"TURNPLAY", TURNPLAY},
+        {"TURNWAIT", TURNWAIT},
+        {"MATCHEND", MATCHEND}
+    };
+
+    string tcpCommand;
+    if (socket_message.find("|") != string :: npos)
+    {
+        tcpCommand = socket_message.substr(0, socket_message.find("|"));
+        socket_message.erase(0, socket_message.find("|")+1);
+        (*argument) = socket_message.substr(0, socket_message.find(" \r\n"));
+    }
+    else
+        tcpCommand = socket_message.substr(0, socket_message.find(" \r\n"));
+    return TCPCommandTranslator[tcpCommand];
 }
