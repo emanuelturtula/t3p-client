@@ -3,6 +3,7 @@
 #include <string>
 #include <list>
 #include <map>
+#include <vector>
 
 using namespace std;
 
@@ -64,7 +65,9 @@ enum context_t {
     SEARCH_PLAYERS,
     LOGOUT_CONTEXT,
     IN_A_GAME,
-    READY_TO_PLAY
+    READY_TO_PLAY,
+    TURNWAIT,
+    TURNPLAY
 };
 
 enum tcpcommand_t {
@@ -100,4 +103,38 @@ class T3PResponse {
         string statusMessage;
         list<string> dataList; 
 };
+
+
+class Slot {
+    public:
+        Slot();
+        void clear();
+        bool available;
+};
+
+enum MatchSlot {
+    CIRCLE,
+    CROSS,
+    EMPTY
+};
+
+enum MatchStatus{
+    TIMEOUT,
+    NORMAL,
+    ENDED
+};
+
+class MatchInfo {
+    private:
+    vector<MatchSlot> slots;
+
+    public:
+        MatchInfo();
+        string circlePlayer = "";
+        string crossPlayer = "";
+        void clearSlots();
+
+
+};
+
 
