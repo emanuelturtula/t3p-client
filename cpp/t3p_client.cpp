@@ -8,11 +8,13 @@ status_t t3p_client()
     status_t status;
     context_t context = MAIN_MENU;
     Server server;
-    string playerName = "edturtu";
+    string playerName;
     string invitationhost;
     int connectedSockfd;
     MatchInfo matchInfo;
     ErrorHandler errorHandler;
+
+    get_player_name(&playerName);
 
     while (context != CLOSE_PROGRAM)
     {
