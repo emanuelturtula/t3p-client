@@ -12,6 +12,7 @@ status_t t3p_client()
     string invitationhost;
     int connectedSockfd;
     MatchInfo matchInfo;
+    ErrorHandler errorHandler;
 
     while (context != CLOSE_PROGRAM)
     {
@@ -20,31 +21,31 @@ status_t t3p_client()
             case MAIN_MENU:
                 if ((status = main_menu(&context)) != STATUS_OK) 
                 {
-                    // Handle error
+                    errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 break;
             case SEARCH_LOCAL_SERVERS:
                 if ((status = search_local_servers_menu(&context, &server)) != STATUS_OK) 
                 {
-                    // Handle error
+                    errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 break;
             case SEARCH_BY_IP:
                 if ((status = search_by_ip_menu(&context, &server)) != STATUS_OK) 
                 {
-                    // Handle error
+                    errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 break;
             case READY_TO_CONNECT:
                 if ((status = connect_menu(&context, server)) != STATUS_OK) 
                 {
-                    // Handle error
+                    errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 break;
             case CONNECT:
                 if ((status = login(server, playerName, &connectedSockfd)) != STATUS_OK) 
                 {
-                    // Handle error
+                    errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 else 
                     context = LOBBY_MENU;
@@ -52,21 +53,21 @@ status_t t3p_client()
             case LOBBY_MENU:
                 if ((status = lobby_menu(&context, connectedSockfd)) != STATUS_OK) 
                 {
-                    // Handle error
+                    errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 break;
             case SEND_INVITE_MENU:
                 // go to invite menu
                 if ((status = invite_menu(&context, server, playerName, connectedSockfd)) != STATUS_OK) 
                 {
-                    // Handle error
+                    errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 break;
             case SEND_RANDOMINVITE_MENU:
                 // go to random invite menu
                 if ((status = random_invite_menu(&context, connectedSockfd)) != STATUS_OK) 
                 {
-                    // Handle error
+                    errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 break;      
             case IN_A_GAME:
@@ -77,13 +78,13 @@ status_t t3p_client()
                 //We set up everything to begin.
                 if((status = ready_to_play_context_setup(connectedSockfd, &context, &matchInfo)) != STATUS_OK)
                 {
-                    // Handle error
+                    errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 break;
             case LOGOUT_CONTEXT:
                 if ((status = logout(&connectedSockfd)) != STATUS_OK) 
                 {
-                    // Handle error
+                    errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 context = MAIN_MENU;
                 break;
