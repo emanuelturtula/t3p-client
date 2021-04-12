@@ -605,7 +605,7 @@ status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo)
             valid_input = false;
             while (valid_input == false)
             {
-                if ((status = poll_event(sockfd, &stdin_message, &socket_message, 1)) != STATUS_OK)
+                if ((status = poll_event(sockfd, &stdin_message, &socket_message)) != STATUS_OK)
                 {
                     // Handle error
                 }  
@@ -665,14 +665,18 @@ status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo)
         else
         { 
             // if it is not my turn
+            system("clear");
             cout << "Waiting other player's move." << endl;
         }
 
         // Wait till the Server tells us TURNWAIT, TURNPLAY or MATCHEND.
         // TURNWAIT and TURNPLAY needs to be answered with a 200 OK.
         if ((status = receive_tcp_command(sockfd, &t3pCommand)) != STATUS_OK)
+        {
+            cerr << "Error receiving command" << endl;
             return STATUS_OK;
-
+        }
+            
         cout << t3pCommand.command << endl;
 
         if (t3pCommand.command == "TURNWAIT")

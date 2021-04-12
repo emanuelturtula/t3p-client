@@ -485,21 +485,32 @@ status_t poll_tcp_message(int sockfd, string *data_stream){
     return STATUS_OK;
 }
 
-status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_message, int timeout=-1)
+status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_message, int timeout)
 {   
     status_t status;
     struct pollfd pfds[2]; // We monitor sockfd and stdin
     T3PCommand t3pCommand;
+    int nevents = 0;
 
-    *stdin_message = "";
-    *socket_message = "";
+    if ((stdin_message == NULL) && (socket_message == NULL))
+        return ERROR_NULL_POINTER;
 
-    pfds[0].fd = 0;        // Stdin input
-    pfds[0].events = POLLIN;    // Tell me when ready to read
-
-    pfds[1].fd = connectedSockfd;        // Sock input
-    pfds[1].events = POLLIN;    // Tell me when ready to read
-
+    if (stdin_message != NULL)
+    {
+        *stdin_message = "";
+        pfds[0].fd = 0;        // Stdin input
+        pfds[0].events = POLLIN;    // Tell me when ready to read
+        nevents++;
+    }    
+    
+    if (socket_message != NULL)
+    {
+        *socket_message = "";
+        pfds[1].fd = connectedSockfd;        // Sock input
+        pfds[1].events = POLLIN;    // Tell me when ready to read
+        nevents++;
+    }  
+   
     int num_events = poll(pfds, 2, timeout); // Wait until an event arrives
     
 
@@ -512,6 +523,11 @@ status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_m
             return status;
 
         *socket_message = t3pCommand.command;
+        for (auto const& data : t3pCommand.dataList)
+        {
+            *socket_message += "|";
+            *socket_message += data;
+        }
     }
 
     return STATUS_OK;

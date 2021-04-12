@@ -228,33 +228,31 @@ map<status_t,string> DICTIONARY_InternalServerErrorsMessages = {
 ErrorHandler:: ErrorHandler(){}
 
 
-void ErrorHandler:: handle_error(status_t status,context_t *context, int socket){
+void ErrorHandler:: handle_error(status_t status, context_t *context, int socket){
     
     status_t st;
     cout << endl;
 
-    if (status < NUMBER_OF_INTERNAL_ERRORS_DEFINED_IN_CLIENT_PROGRAM){
-
-
+    if (status < NUMBER_OF_INTERNAL_ERRORS_DEFINED_IN_CLIENT_PROGRAM)
+    {
         cout << "\033[1;31mError in client program: \033[0m" << "statusID = " << to_string(status) << endl;
         cout << "Error Message: " << DICTIONARY_InternalServerErrorsMessages[status] << endl << endl;
         cout << "Returning to LOBBY" << endl << endl;
         (*context) = LOBBY_MENU;
-
-    }else if ( (((*context) == TURNPLAY) || ((*context) == TURNWAIT)) && status == ERROR_BAD_MESSAGE_FORMAT){ // In this case, it is a RFC ERROR from server and we have to notify it.
+    }
+    // else if ( (((*context) == TURNPLAY) || ((*context) == TURNWAIT)) && status == ERROR_BAD_MESSAGE_FORMAT){ // In this case, it is a RFC ERROR from server and we have to notify it.
   
-        cout << "\033[1;31mError from SERVER: \033[0m" << "statusID = " << to_string(status) << endl;
-        cout << "Error Message: " << DICTIONARY_InternalServerErrorsMessages[status] << endl << endl;
-        cout << "Notifiying server about error" << endl;
-        cout << "This is an error related to T3P protocol. Please refer to documentation for information.";
-        cout << "Logging out from server" << endl << endl;
+    //     cout << "\033[1;31mError from SERVER: \033[0m" << "statusID = " << to_string(status) << endl;
+    //     cout << "Error Message: " << DICTIONARY_InternalServerErrorsMessages[status] << endl << endl;
+    //     cout << "Notifiying server about error" << endl;
+    //     cout << "This is an error related to T3P protocol. Please refer to documentation for information.";
+    //     cout << "Logging out from server" << endl << endl;
 
-        (*context) == LOGOUT_CONTEXT;
+    //     (*context) == LOGOUT_CONTEXT;
 
-        send_tcp_message(socket, "400|Bad Request \r\n \r\n");
-
-    
-    } else { // We receive have an unexpected error related to the RFC:
+    //     send_tcp_message(socket, "400|Bad Request \r\n \r\n");
+    // } 
+    else { // We receive have an unexpected error related to the RFC:
 
         cout << "\033[1;31mError: \033[0m" << "statusID = " << to_string(status) << endl;
         cout << "Error Message: " << DICTIONARY_InternalServerErrorsMessages[status] << endl << endl;
