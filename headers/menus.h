@@ -6,6 +6,8 @@
 #include "../headers/tcp.h"
 
 status_t main_menu(context_t *context);
+void get_player_name(string *playerName);
+
 status_t search_local_servers_menu(context_t *context, Server *server);
 status_t search_by_ip_menu(context_t *context, Server *server);
 status_t connect_menu(context_t *context, Server server);

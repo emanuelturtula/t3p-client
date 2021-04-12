@@ -15,6 +15,31 @@ using namespace std;
 bool scanAgain();
 bool parse_list_of_players(string players, vector<string> *parsedPlayers); 
 
+
+void get_player_name(string *playerName){
+
+    bool nameCorrect = false;
+
+    while(nameCorrect == false){
+
+        regex playerNameChecker("^[a-zA-Z]+$");
+
+        cout << "Please, enter your player name:" << endl;
+        cout << "(min. 3 and max. 20 characters long. Only Alpha char allowed [a-z])" << endl;
+
+        getline(cin,*playerName);
+
+        if  ((playerName->size() < 3 || playerName->size() > 20) ||
+            (!regex_match(*playerName, playerNameChecker))){
+ 
+            cout << "This name is not allowed, please select another" << endl;
+        }else{
+            nameCorrect = true;
+        }
+    }
+}
+
+
 status_t main_menu(context_t *context)
 {
     /**
