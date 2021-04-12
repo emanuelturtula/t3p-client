@@ -312,7 +312,6 @@ status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse)
     memset(response, 0, strlen(response));
     string socket_message;
 
-
     if ((status = peek_tcp_buffer(sockfd, &read_bytes, &socket_message)) != STATUS_OK)
         return status;
     

@@ -33,6 +33,10 @@ enum status_t {
 
     ERROR_NULL_POINTER,
 
+    // This next status_t indicates number of status_t errors that exist in the program:
+    // Currently, we have 20 possible errors:
+    NUMBER_OF_INTERNAL_ERRORS_DEFINED_IN_CLIENT_PROGRAM, 
+
     /*******************************/
     // RFC Responses:
     //1xx: Informative responses
@@ -53,6 +57,8 @@ enum status_t {
     //5xx: Errors from server
     ERROR_SERVER_ERROR = 500,
 };
+
+
 
 enum context_t {
     MAIN_MENU,
@@ -159,3 +165,12 @@ enum tcpcommand_t {
 };
 
 extern map<string, status_t> T3PStatusCodeMapper;
+extern map<status_t,string> DICTIONARY_InternalServerErrorsMessages;
+
+class ErrorHandler {
+    public:
+        ErrorHandler();
+        void handle_error(status_t status,context_t *context, int socket);
+};
+
+
