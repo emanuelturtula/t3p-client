@@ -605,7 +605,7 @@ status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo)
             valid_input = false;
             while (valid_input == false)
             {
-                if ((status = poll_event(sockfd, &stdin_message, &socket_message)) != STATUS_OK)
+                if ((status = poll_event(sockfd, &stdin_message, &socket_message, 1)) != STATUS_OK)
                 {
                     // Handle error
                 }  
@@ -641,7 +641,7 @@ status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo)
                         }
                         else 
                         {
-                            slot_number = stoi(stdin_message);
+                            slot_number = stoi(stdin_message)-1;
                             if (matchInfo.getSlots()[slot_number] != EMPTY)
                                 cerr << "Error. The slot is occupied. Please enter another one" << endl;
                             else 
@@ -673,6 +673,8 @@ status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo)
         if ((status = receive_tcp_command(sockfd, &t3pCommand)) != STATUS_OK)
             return STATUS_OK;
 
+        cout << t3pCommand.command << endl;
+
         if (t3pCommand.command == "TURNWAIT")
         {
             if ((status = send_tcp_message(sockfd, "200|OK \r\n \r\n")) != STATUS_OK)
@@ -701,14 +703,20 @@ status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo)
         }
         else if (t3pCommand.command == "MATCHEND")
         {
-            if (t3pCommand.dataList.front().find("WIN") != string::npos)
+            if (t3pCommand.dataList.front().find("YOUWIN") != string::npos)
                 cout << "YOU WON!!" << endl;
-            else if (t3pCommand.dataList.front().find("CONNECTIONLOST") != string::npos)
-                cout << "The other player lost connection" << endl;
-            else if (t3pCommand.dataList.front().find("LOSE") != string::npos)
+            else if (t3pCommand.dataList.front().find("TIMEOUTWIN") != string::npos)
+                cout << "You win due to timeout!" << endl;
+            else if (t3pCommand.dataList.front().find("YOULOSE") != string::npos)
                 cout << "YOU LOST!!" << endl;
+            else if (t3pCommand.dataList.front().find("TIMEOUTLOSE") != string::npos)
+                cout << "You lost due to timeout!" << endl;
             else if (t3pCommand.dataList.front().find("DRAW") != string::npos)
                 cout << "Match ended in draw!" << endl;
+            else if (t3pCommand.dataList.front().find("CONNECTIONLOST") != string::npos)
+                cout << "The other player lost connection" << endl;
+            
+
             sleep(5);
             *context = LOBBY_MENU;
         }

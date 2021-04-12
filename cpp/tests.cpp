@@ -68,7 +68,7 @@ status_t run_test_menus()
 status_t test_mark_slots()
 {
     MatchInfo match;
-    match.parseSlots("123", "456");
+    match.setSlots("123", "456");
     return STATUS_OK;
 }
 // status_t run_test_tcp()

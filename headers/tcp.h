@@ -30,5 +30,5 @@ status_t parse_tcp_message(string response, T3PResponse *t3pResponse);
 status_t poll_tcp_message(int sockfd, string *data_stream);
 status_t parse_tcp_command(string message, T3PCommand *t3pCommand);
 tcpcommand_t parse_tcp_command(string socket_message, string *argument);
-status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_message);
+status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_message, int timeout=-1);
 status_t peek_tcp_buffer(int sockfd, int *read_bytes, string *socket_message);

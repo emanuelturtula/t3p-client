@@ -316,7 +316,9 @@ status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse)
     if ((status = peek_tcp_buffer(sockfd, &read_bytes, &socket_message)) != STATUS_OK)
         return status;
     
-    if ((pos = socket_message.find_first_of(" \r\n \r\n")) != string :: npos)
+
+    
+    if ((pos = socket_message.find(" \r\n \r\n")) != string :: npos)
         strip_bytes = pos + strlen(" \r\n \r\n");
         
     int bytes = recv(sockfd, response, strip_bytes, 0);
@@ -371,7 +373,7 @@ status_t receive_tcp_command(int sockfd, T3PCommand *t3pCommand)
         return status;
 
     int pos;
-    if ((pos = socket_message.find_first_of(" \r\n \r\n")) != string :: npos)
+    if ((pos = socket_message.find(" \r\n \r\n")) != string :: npos)
         strip_bytes = pos + strlen(" \r\n \r\n");
         
     int bytes = recv(sockfd, message, strip_bytes, 0);
@@ -484,7 +486,7 @@ status_t poll_tcp_message(int sockfd, string *data_stream){
     return STATUS_OK;
 }
 
-status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_message)
+status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_message, int timeout=-1)
 {   
     status_t status;
     struct pollfd pfds[2]; // We monitor sockfd and stdin
@@ -499,9 +501,8 @@ status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_m
     pfds[1].fd = connectedSockfd;        // Sock input
     pfds[1].events = POLLIN;    // Tell me when ready to read
 
-    int num_events = poll(pfds, 2, -1); // Wait until an event arrives
-
-    int pollin_happened = pfds[0].revents & POLLIN;
+    int num_events = poll(pfds, 2, timeout); // Wait until an event arrives
+    
 
     if (pfds[0].revents & POLLIN)
         getline(cin, (*stdin_message));
