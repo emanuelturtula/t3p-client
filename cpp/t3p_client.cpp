@@ -2,6 +2,7 @@
 #include "../headers/types.h"
 #include "../headers/tcp.h"
 #include "../headers/menus.h"
+#include <thread>
 
 status_t t3p_client()
 {
@@ -13,7 +14,7 @@ status_t t3p_client()
     int connectedSockfd;
     MatchInfo matchInfo;
     ErrorHandler errorHandler;
-
+    thread heartbeatThread(heartbeat_thread, &context, &connectedSockfd);
     get_player_name(&playerName);
 
     while (context != CLOSE_PROGRAM)

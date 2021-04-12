@@ -21,7 +21,7 @@ status_t invitation_response(int sockfd,bool response);
 status_t markslot(int sockfd, string slot);
 status_t giveup(int sockfd);
 
-void heartbeat_thread(int sockfd);
+void heartbeat_thread(context_t *context, int *sockfd);
 
 status_t send_tcp_message(int sockfd, const char *message);
 status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse);
