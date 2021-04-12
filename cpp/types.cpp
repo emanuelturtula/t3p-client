@@ -245,7 +245,7 @@ void ErrorHandler:: handle_error(status_t status,context_t *context, int socket)
   
         cout << "\033[1;31mError from SERVER: \033[0m" << "statusID = " << to_string(status) << endl;
         cout << "Error Message: " << DICTIONARY_InternalServerErrorsMessages[status] << endl << endl;
-        cout << "Notifiying server about error" << end;
+        cout << "Notifiying server about error" << endl;
         cout << "This is an error related to T3P protocol. Please refer to documentation for information.";
         cout << "Logging out from server" << endl << endl;
 
