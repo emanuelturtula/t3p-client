@@ -15,7 +15,7 @@ status_t ready_to_play_context_setup(int sockfd, context_t *context, MatchInfo *
 status_t invite_menu(context_t *context, Server server, string myPlayerName, int connectedSockfd);
 status_t received_invite_menu(context_t *context, int connectedSockfd, string invitingPlayerName);
 status_t random_invite_menu(context_t *context, int connectedSockfd);
-
+status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo);
 
 #define LOBBY_MENU_TITLE "TicTacToe LOBBY\n----------------------------------\n\n"
 #define INVITE_MENU_TITLE "TicTacToe INVITE\n----------------------------------\n\n"

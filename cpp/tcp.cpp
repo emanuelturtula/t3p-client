@@ -141,9 +141,16 @@ status_t login(Server server, string player_name, int *sockfd)
 
 status_t logout(int *sockfd)
 {
+    T3PResponse t3pResponse;
     const char *message = "LOGOUT \r\n \r\n";
     if (send_tcp_message(*sockfd, message) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
+
+    if (receive_tcp_message(*sockfd, &t3pResponse) != STATUS_OK)
+        return ERROR_SENDING_MESSAGE;
+    
+    if (t3pResponse.statusMessage != "OK")
+        return T3PStatusCodeMapper[t3pResponse.statusCode];
 
     connected = false;
     close(*sockfd);
@@ -266,6 +273,20 @@ status_t send_invitation_response(int sockfd, bool response){
     return send_tcp_message(sockfd, message.c_str()); //returns status_t of function send_tcp_message()
 }
 
+status_t markslot(int sockfd, string slot)
+{
+    T3PResponse t3pResponse;
+    T3PCommand t3pCommand;
+    string message = "MARKSLOT|" + slot + " \r\n \r\n";
+    if (send_tcp_message(sockfd, message.c_str()) != STATUS_OK)
+        return ERROR_SENDING_MESSAGE;
+    
+    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
+        return ERROR_RECEIVING_MESSAGE;
+    
+    return T3PStatusCodeMapper[t3pResponse.statusCode];
+}
+
 
 /**
  * Internal functions
@@ -294,7 +315,9 @@ status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse)
     if ((status = peek_tcp_buffer(sockfd, &read_bytes, &socket_message)) != STATUS_OK)
         return status;
     
-    if ((pos = socket_message.find_first_of(" \r\n \r\n")) != string :: npos)
+
+    
+    if ((pos = socket_message.find(" \r\n \r\n")) != string :: npos)
         strip_bytes = pos + strlen(" \r\n \r\n");
         
     int bytes = recv(sockfd, response, strip_bytes, 0);
@@ -349,7 +372,7 @@ status_t receive_tcp_command(int sockfd, T3PCommand *t3pCommand)
         return status;
 
     int pos;
-    if ((pos = socket_message.find_first_of(" \r\n \r\n")) != string :: npos)
+    if ((pos = socket_message.find(" \r\n \r\n")) != string :: npos)
         strip_bytes = pos + strlen(" \r\n \r\n");
         
     int bytes = recv(sockfd, message, strip_bytes, 0);
@@ -462,35 +485,49 @@ status_t poll_tcp_message(int sockfd, string *data_stream){
     return STATUS_OK;
 }
 
-status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_message)
+status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_message, int timeout)
 {   
+    status_t status;
     struct pollfd pfds[2]; // We monitor sockfd and stdin
+    T3PCommand t3pCommand;
+    int nevents = 0;
 
+    if ((stdin_message == NULL) && (socket_message == NULL))
+        return ERROR_NULL_POINTER;
 
-    *stdin_message = "";
-    *socket_message = "";
-
-    pfds[0].fd = 0;        // Stdin input
-    pfds[0].events = POLLIN;    // Tell me when ready to read
-
-    pfds[1].fd = connectedSockfd;        // Sock input
-    pfds[1].events = POLLIN;    // Tell me when ready to read
-
-    int num_events = poll(pfds, 2, -1); // Wait until an event arrives
-
-    int pollin_happened = pfds[0].revents & POLLIN;
+    if (stdin_message != NULL)
+    {
+        *stdin_message = "";
+        pfds[0].fd = 0;        // Stdin input
+        pfds[0].events = POLLIN;    // Tell me when ready to read
+        nevents++;
+    }    
+    
+    if (socket_message != NULL)
+    {
+        *socket_message = "";
+        pfds[1].fd = connectedSockfd;        // Sock input
+        pfds[1].events = POLLIN;    // Tell me when ready to read
+        nevents++;
+    }  
+   
+    int num_events = poll(pfds, 2, timeout); // Wait until an event arrives
+    
 
     if (pfds[0].revents & POLLIN)
         getline(cin, (*stdin_message));
 
     if (pfds[1].revents & POLLIN)
     {
-        char c_response[BUFFER_SIZE];
-        memset(c_response, 0, strlen(c_response));
-        int bytes = recv(connectedSockfd, c_response, sizeof(c_response), 0);
-        if (bytes < 0)
-            return ERROR_RECEIVING_MESSAGE;
-        (*socket_message) = c_response;
+        if ((status = receive_tcp_command(connectedSockfd, &t3pCommand)) != STATUS_OK)
+            return status;
+
+        *socket_message = t3pCommand.command;
+        for (auto const& data : t3pCommand.dataList)
+        {
+            *socket_message += "|";
+            *socket_message += data;
+        }
     }
 
     return STATUS_OK;

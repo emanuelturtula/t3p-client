@@ -137,10 +137,12 @@ class MatchInfo {
         string circlePlayer = "";
         string crossPlayer = "";
         void printSlots();
-
+        bool playAsCirle = false;
         bool myTurn;
         void clearSlots();
-        void parseSlots(string circleSlots, string crossSlots);
+        void setSlots(string circleSlots, string crossSlots);
+        vector<MatchSlot> getSlots();
+        void printSlotsNumpad();
 };
 
 class T3PCommand {
@@ -162,6 +164,7 @@ enum tcpcommand_t {
     MATCHEND
 };
 
+extern map<string, status_t> T3PStatusCodeMapper;
 extern map<status_t,string> DICTIONARY_InternalServerErrorsMessages;
 
 class ErrorHandler {

@@ -517,7 +517,7 @@ bool parse_list_of_players(string players, vector<string> *parsedPlayers)
         (*parsedPlayers).push_back(players.substr(0));
         return true;  
     }
-  
+
     return false; 
 }
 
@@ -563,6 +563,167 @@ status_t ready_to_play_context_setup(int sockfd, context_t *context, MatchInfo *
     else{
         (*context) = LOBBY_MENU;
         return ERROR_READY_TO_PLAY_MATCH_NOT_SET_FROM_SERVER;
+    }
+    return STATUS_OK;
+}
+
+status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo)
+{
+    status_t status;
+    string stdin_message;
+    string socket_message;
+    string message;
+    int slot_number;
+    T3PCommand t3pCommand;
+    string circleSlots;
+    string crossSlots;
+    string slots;
+    bool valid_input = false;
+    *context = IN_A_GAME;
+    system("clear");
+    if (matchInfo.myTurn)
+    {
+        matchInfo.playAsCirle = true;
+        cout << "You play as CIRCLE\n\n\n" << endl;
+    }
+    else
+    {
+        matchInfo.playAsCirle = false;
+        cout << "You play as CROSS\n\n\n" << endl;
+    }
+        
+    while (*context == IN_A_GAME)
+    {
+        // print the board
+        matchInfo.printSlots();
+        if (matchInfo.myTurn)
+        {
+            cout << "It's your turn. Please choose the next slot number to mark." << endl;
+            matchInfo.printSlotsNumpad();
+            cout << "To giveup match, please write 0.\n" << endl;
+            // If it is my turn, I need to tell the player to enter a slot number
+            valid_input = false;
+            while (valid_input == false)
+            {
+                if ((status = poll_event(sockfd, &stdin_message, &socket_message)) != STATUS_OK)
+                {
+                    // Handle error
+                }  
+                if (socket_message != "")
+                {
+                    // If we got here, probably it's because we lost due to timeout. Also it could happen
+                    // that the other player got disconnected so it's a connection lost message.
+                    if (socket_message.find("MATCHEND|TIMEOUT") != string::npos)
+                        cout << "You lost due to timeout" << endl;
+                    else if (socket_message.find("MATCHEND|CONNECTIONLOST") != string::npos)
+                        cout << "The other player lost connection" << endl;
+                    *context = LOBBY_MENU;
+                    sleep(2);
+                    return STATUS_OK;
+                }
+                else if (stdin_message != "")
+                {
+                    // If the entered message is different from a number from 0 to 9, tell the user that
+                    // it is wrong.
+                    if ((stdin_message.size() > 1) || (stdin_message.find_first_not_of("0123456789") != string::npos))
+                        cerr << "Error. Bad option. Please enter another one";
+                    else
+                    {
+                        if (stdin_message == "0")
+                        {
+                            // 0 is to giveup.
+                            if ((status = giveup(sockfd)) != STATUS_OK)
+                            {
+                                // handle error
+                            }
+                            *context = LOBBY_MENU;
+                            valid_input = true;
+                        }
+                        else 
+                        {
+                            slot_number = stoi(stdin_message)-1;
+                            if (matchInfo.getSlots()[slot_number] != EMPTY)
+                                cerr << "Error. The slot is occupied. Please enter another one" << endl;
+                            else 
+                            {
+                                if ((status = markslot(sockfd, stdin_message)) != STATUS_OK)
+                                {
+                                    // handle error
+                                }
+                                valid_input = true;
+                                if (matchInfo.playAsCirle)
+                                    matchInfo.setSlots(stdin_message, "");
+                                else 
+                                    matchInfo.setSlots("", stdin_message);
+                                matchInfo.printSlots();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else
+        { 
+            // if it is not my turn
+            system("clear");
+            cout << "Waiting other player's move." << endl;
+        }
+
+        // Wait till the Server tells us TURNWAIT, TURNPLAY or MATCHEND.
+        // TURNWAIT and TURNPLAY needs to be answered with a 200 OK.
+        if ((status = receive_tcp_command(sockfd, &t3pCommand)) != STATUS_OK)
+        {
+            cerr << "Error receiving command" << endl;
+            return STATUS_OK;
+        }
+            
+        cout << t3pCommand.command << endl;
+
+        if (t3pCommand.command == "TURNWAIT")
+        {
+            if ((status = send_tcp_message(sockfd, "200|OK \r\n \r\n")) != STATUS_OK)
+            {
+                // handle error
+            }
+            matchInfo.myTurn = false;
+            slots = t3pCommand.dataList.front();
+            crossSlots = slots.substr(0, slots.find("|"));
+            slots.erase(0, slots.find("|") + 1);
+            circleSlots = slots.substr(0, slots.find(" \r\n \r\n"));
+            matchInfo.setSlots(circleSlots, crossSlots);
+        }
+        else if (t3pCommand.command == "TURNPLAY")
+        {
+            if ((status = send_tcp_message(sockfd, "200|OK \r\n \r\n")) != STATUS_OK)
+            {
+                // handle error
+            }
+            matchInfo.myTurn = true;
+            slots = t3pCommand.dataList.front();
+            crossSlots = slots.substr(0, slots.find("|"));
+            slots.erase(0, slots.find("|") + 1);
+            circleSlots = slots.substr(0, slots.find(" \r\n \r\n"));
+            matchInfo.setSlots(circleSlots, crossSlots);
+        }
+        else if (t3pCommand.command == "MATCHEND")
+        {
+            if (t3pCommand.dataList.front().find("YOUWIN") != string::npos)
+                cout << "YOU WON!!" << endl;
+            else if (t3pCommand.dataList.front().find("TIMEOUTWIN") != string::npos)
+                cout << "You win due to timeout!" << endl;
+            else if (t3pCommand.dataList.front().find("YOULOSE") != string::npos)
+                cout << "YOU LOST!!" << endl;
+            else if (t3pCommand.dataList.front().find("TIMEOUTLOSE") != string::npos)
+                cout << "You lost due to timeout!" << endl;
+            else if (t3pCommand.dataList.front().find("DRAW") != string::npos)
+                cout << "Match ended in draw!" << endl;
+            else if (t3pCommand.dataList.front().find("CONNECTIONLOST") != string::npos)
+                cout << "The other player lost connection" << endl;
+            
+
+            sleep(5);
+            *context = LOBBY_MENU;
+        }
     }
     return STATUS_OK;
 }

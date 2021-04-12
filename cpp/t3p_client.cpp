@@ -71,7 +71,10 @@ status_t t3p_client()
                 }
                 break;      
             case IN_A_GAME:
-                //TODO
+                if ((status = in_a_game_context(connectedSockfd, &context, matchInfo)) != STATUS_OK) 
+                {
+                    // Handle error
+                }
                 break;
             case READY_TO_PLAY:
                 //Here we begin a new game. We must wait until we receive the first TURN.
