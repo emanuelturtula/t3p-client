@@ -248,14 +248,22 @@ status_t wait_invitation_response(int sockfd, bool *accept)
     return STATUS_OK;
 }
 
-void heartbeat_thread(int sockfd)
+void heartbeat_thread(context_t *context, int *sockfd)
 {
     const char *message = "HEARTBEAT \r\n \r\n";
-    while (connected == true)
+    while (*context != CLOSE_PROGRAM)
     {
-        send_tcp_message(sockfd, message);
+        while((*context != MAIN_MENU) && (*context != SEARCH_LOCAL_SERVERS) && (*context != SEARCH_BY_IP))
+        {
+            if (connected == true)
+            {
+                send_tcp_message(*sockfd, message);
+                sleep(2);
+            }   
+        }
         sleep(2);
-    }   
+    }
+
 }
 
 /* According to variable "response" it sends an ACCEPT or DECLINE command.
