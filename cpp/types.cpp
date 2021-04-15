@@ -174,92 +174,27 @@ void MatchInfo :: printSlotsNumpad()
 }
 
 map<string, status_t> T3PStatusCodeMapper {
+    {"101", INFO_NO_PLAYERS_AVAILABLE},
     {"200", STATUS_OK},
     {"400", ERROR_BAD_REQUEST},
+    {"401", ERROR_INCORRECT_NAME},
+    {"402", ERROR_NAME_TAKEN},
+    {"403", ERROR_PLAYER_NOT_FOUND},
+    {"404", ERROR_PLAYER_OCCUPIED},
     {"405", ERROR_BAD_SLOT},
     {"406", ERROR_NOT_TURN},
+    {"407", ERROR_INVALID_COMMAND},
     {"408", ERROR_COMMAND_OUT_OF_CONTEXT},
     {"500", ERROR_SERVER_ERROR}
 };
 
-map<status_t,string> DICTIONARY_InternalServerErrorsMessages = {
-    {STATUS_OK, "STATUS_OK"},
-    {ERROR_SOCKET_CREATION, "ERROR_SOCKET_CREATION"}, 
-    {ERROR_SOCKET_CONFIGURATION, "ERROR_SOCKET_CONFIGURATION"},
-    {ERROR_SOCKET_LISTENING,"ERROR_SOCKET_LISTENING"},
-    {ERROR_SOCKET_READING,"ERROR_SOCKET_READING"},
-    {ERROR_SOCKET_BINDING,"ERROR_SOCKET_BINDING"},
-    {ERROR_SENDING_MESSAGE,"ERROR_SENDING_MESSAGE"},
-    {ERROR_RECEIVING_MESSAGE,"ERROR_RECEIVING_MESSAGE"},
-    {ERROR_NO_SERVERS_ONLINE,"ERROR_NO_SERVERS_ONLINE"},
-    {ERROR_BAD_MESSAGE_FORMAT,"ERROR_BAD_MESSAGE_FORMAT"},
-    {ERROR_CONNECTING,"ERROR_CONNECTING"},
-    {ERROR_LOGIN,"ERROR_LOGIN"},
-    {ERROR_STATUS_MESSAGE,"ERROR_STATUS_MESSAGE"},
-    {ERROR_BAD_PLAYER_NAME,"ERROR_BAD_PLAYER_NAME"},
-    {ERROR_OUT_OF_CONTEXT,"ERROR_OUT_OF_CONTEXT"},
-    {ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM,"ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM"},
-    {ERROR_POLL_DETECTED_0_EVENTS,"ERROR_POLL_DETECTED_0_EVENTS"},
-    {ERROR_NOT_RECIVIED_INVTEFROM,"ERROR_NOT_RECIVIED_INVTEFROM"},
-    {ERROR_READY_TO_PLAY_MATCH_NOT_SET_FROM_SERVER,"ERROR_READY_TO_PLAY_MATCH_NOT_SET_FROM_SERVER"},
-    {ERROR_NULL_POINTER,"ERROR_NULL_POINTER"},
-    ////////////////////////7
-        /*******************************/
-        // RFC Responses:
-        //1xx: Informative responses
-    {INFO_NO_PLAYERS_AVAILABLE,"INFO_NO_PLAYERS_AVAILABLE"},
-        //2xx: Correct petitions
-    {RESPONSE_OK,"RESPONSE_OK"},
-        //4xx: Errors from client
-    {ERROR_BAD_REQUEST,"ERROR_BAD_REQUEST"},
-    {ERROR_INCORRECT_NAME,"ERROR_INCORRECT_NAME"},
-    {ERROR_NAME_TAKEN,"ERROR_NAME_TAKEN"},
-    {ERROR_PLAYER_NOT_FOUND,"ERROR_PLAYER_NOT_FOUND"},
-    {ERROR_PLAYER_OCCUPIED,"ERROR_PLAYER_OCCUPIED"},
-    {ERROR_BAD_SLOT,"ERROR_BAD_SLOT"},
-    {ERROR_NOT_TURN,"ERROR_NOT_TURN"},
-    {ERROR_INVALID_COMMAND,"ERROR_INVALID_COMMAND"},
-    {ERROR_COMMAND_OUT_OF_CONTEXT,"ERROR_COMMAND_OUT_OF_CONTEXT"},
-    {ERROR_CONNECTION_LOST,"ERROR_CONNECTION_LOST"},
-        //5xx: Errors from server
-    {ERROR_SERVER_ERROR,"ERROR_SERVER_ERROR"}
+map<string, tcpcommand_t> TCPCommandTranslator = {
+    {"INVITEFROM", INVITEFROM},
+    {"INVITATIONTIMEOUT", INVITATIONTIMEOUT},
+    {"ACCEPT", ACCEPT},
+    {"DECLINE", DECLINE},
+    {"TURNPLAY", TURNPLAY},
+    {"TURNWAIT", TURNWAIT},
+    {"MATCHEND", MATCHEND}
 };
 
-ErrorHandler:: ErrorHandler(){}
-
-
-void ErrorHandler:: handle_error(status_t status, context_t *context, int socket){
-    
-    status_t st;
-    cout << endl;
-
-    if (status < NUMBER_OF_INTERNAL_ERRORS_DEFINED_IN_CLIENT_PROGRAM)
-    {
-        cout << "\033[1;31mError in client program: \033[0m" << "statusID = " << to_string(status) << endl;
-        cout << "Error Message: " << DICTIONARY_InternalServerErrorsMessages[status] << endl << endl;
-        cout << "Returning to LOBBY" << endl << endl;
-        (*context) = LOBBY_MENU;
-    }
-    // else if ( (((*context) == TURNPLAY) || ((*context) == TURNWAIT)) && status == ERROR_BAD_MESSAGE_FORMAT){ // In this case, it is a RFC ERROR from server and we have to notify it.
-  
-    //     cout << "\033[1;31mError from SERVER: \033[0m" << "statusID = " << to_string(status) << endl;
-    //     cout << "Error Message: " << DICTIONARY_InternalServerErrorsMessages[status] << endl << endl;
-    //     cout << "Notifiying server about error" << endl;
-    //     cout << "This is an error related to T3P protocol. Please refer to documentation for information.";
-    //     cout << "Logging out from server" << endl << endl;
-
-    //     (*context) == LOGOUT_CONTEXT;
-
-    //     send_tcp_message(socket, "400|Bad Request \r\n \r\n");
-    // } 
-    else { // We receive have an unexpected error related to the RFC:
-
-        cout << "\033[1;31mError: \033[0m" << "statusID = " << to_string(status) << endl;
-        cout << "Error Message: " << DICTIONARY_InternalServerErrorsMessages[status] << endl << endl;
-        cout << "This is an error related to T3P protocol. Please refer to documentation for information.";
-        cout << "Logging out from server" << endl << endl;
-
-        (*context) == LOGOUT_CONTEXT;
-
-    }
-}

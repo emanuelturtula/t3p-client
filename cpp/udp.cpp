@@ -9,27 +9,18 @@
 #include "../headers/udp.h"
 #include "../headers/types.h"
 
-/**
- * Prototypes for internal functions
- * */
-
 status_t receive(int sockfd, struct sockaddr_in server_addr, list<T3PResponse> *t3pResponseList);
 status_t parse_response(string response, T3PResponse *t3pResponse);
 
-/**
- * Functions
- * */
 
 status_t send_discover_broadcast(list<T3PResponse> *t3pResponseList)
 {
-    // Define variables
     int broadcast_enable;
     int sockfd;
     struct timeval timeout;
     struct sockaddr_in server_addr;
     const char *message = "DISCOVERBROADCAST \r\n \r\n";
 
-    // Create socket
     sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sockfd < 0)
         return ERROR_SOCKET_CREATION;
@@ -40,8 +31,8 @@ status_t send_discover_broadcast(list<T3PResponse> *t3pResponseList)
         return ERROR_SOCKET_CONFIGURATION;
     
     // Configure timeout
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 100000;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
         return ERROR_SOCKET_CONFIGURATION;
 
@@ -54,13 +45,11 @@ status_t send_discover_broadcast(list<T3PResponse> *t3pResponseList)
     if (sendto(sockfd, message, strlen(message), 0, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0)
         return ERROR_SENDING_MESSAGE;
     
+    (*t3pResponseList).clear();
     if (receive(sockfd, server_addr, t3pResponseList) != STATUS_OK)
         return ERROR_RECEIVING_MESSAGE;
     
     close(sockfd);
-
-    if ((*t3pResponseList).empty())
-        return ERROR_NO_SERVERS_ONLINE;
     
     return STATUS_OK;
 }
@@ -95,15 +84,13 @@ status_t send_discover(string ip, T3PResponse *t3pResponse)
     // Send message
     if (sendto(sockfd, message, strlen(message), 0, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0)
         return ERROR_SENDING_MESSAGE;
-    
+
+    t3pResponseList.clear();    
     if (receive(sockfd, server_addr, &t3pResponseList) != STATUS_OK)
         return ERROR_RECEIVING_MESSAGE;
     
     close(sockfd);
 
-    if (t3pResponseList.empty())
-        return ERROR_NO_SERVERS_ONLINE;
-    
     *t3pResponse = t3pResponseList.front();
     
     return STATUS_OK;

@@ -2,6 +2,7 @@
 #include "../headers/types.h"
 #include "../headers/tcp.h"
 #include "../headers/menus.h"
+#include <unistd.h>
 #include <thread>
 
 status_t t3p_client()
@@ -13,85 +14,98 @@ status_t t3p_client()
     string invitationhost;
     int connectedSockfd;
     MatchInfo matchInfo;
-    ErrorHandler errorHandler;
     thread heartbeatThread(heartbeat_thread, &context, &connectedSockfd);
-    get_player_name(&playerName);
 
     while (context != CLOSE_PROGRAM)
     {
         switch(context)
         {
             case MAIN_MENU:
-                if ((status = main_menu(&context)) != STATUS_OK) 
-                {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
-                }
+                main_menu(&context);
                 break;
-            case SEARCH_LOCAL_SERVERS:
+            case SEARCH_LOCAL_SERVERS_MENU:
                 if ((status = search_local_servers_menu(&context, &server)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+
                 }
                 break;
-            case SEARCH_BY_IP:
+            case SEARCH_BY_IP_MENU:
                 if ((status = search_by_ip_menu(&context, &server)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+                    
+                }
+                break;
+            case FAST_CONNECT_MENU:
+                if ((status = fast_connect_menu(&context, &server)) != STATUS_OK) 
+                {
+                    
                 }
                 break;
             case READY_TO_CONNECT:
                 if ((status = connect_menu(&context, server)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+                    
                 }
                 break;
             case CONNECT:
-                if ((status = login(server, playerName, &connectedSockfd)) != STATUS_OK) 
+                playerName = get_player_name();
+                cout << "Getting connected socket..." << endl;
+                if ((status = get_connected_socket(server.ip, &connectedSockfd)) != STATUS_OK)
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+                    cerr << "Error connecting to server" << endl;
+                    sleep(2);
+                    context = MAIN_MENU;
                 }
-                else 
-                    context = LOBBY_MENU;
+                else
+                {
+                    cout << "OK." << endl;
+                    cout << "Logging in..." << endl;
+                    if ((status = login(connectedSockfd, playerName)) != STATUS_OK)
+                    {
+                        cerr << "Error bad login" << endl;
+                        context = MAIN_MENU;
+                        close(connectedSockfd);
+                    }
+                    else
+                        context = LOBBY_MENU;
+                }
                 break;
             case LOBBY_MENU:
                 if ((status = lobby_menu(&context, connectedSockfd)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+
                 }
                 break;
-            case SEND_INVITE_MENU:
-                // go to invite menu
+            case INVITE_MENU:
                 if ((status = invite_menu(&context, server, playerName, connectedSockfd)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+
                 }
                 break;
-            case SEND_RANDOMINVITE_MENU:
-                // go to random invite menu
+            case RANDOMINVITE_MENU:
                 if ((status = random_invite_menu(&context, connectedSockfd)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+
                 }
                 break;      
+            case READY_TO_PLAY:
+                if((status = ready_to_play_context(&context, connectedSockfd, &matchInfo)) != STATUS_OK)
+                {
+
+                }
+                break;
             case IN_A_GAME:
-                if ((status = in_a_game_context(connectedSockfd, &context, matchInfo)) != STATUS_OK) 
+                if ((status = in_a_game_context(&context, connectedSockfd, matchInfo)) != STATUS_OK) 
                 {
                     // Handle error
                 }
                 break;
-            case READY_TO_PLAY:
-                //Here we begin a new game. We must wait until we receive the first TURN.
-                //We set up everything to begin.
-                if((status = ready_to_play_context_setup(connectedSockfd, &context, &matchInfo)) != STATUS_OK)
+            case LOGOUT:
+                if ((status = logout(connectedSockfd)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+                    // Handle error
                 }
-                break;
-            case LOGOUT_CONTEXT:
-                if ((status = logout(&connectedSockfd)) != STATUS_OK) 
-                {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
-                }
+                close(connectedSockfd);
                 context = MAIN_MENU;
                 break;
             default:
@@ -99,6 +113,10 @@ status_t t3p_client()
                 context = LOBBY_MENU;
         }   
     }
+
+    // If heartbeat thread is still running, wait until it stops
+    if (heartbeatThread.joinable())
+        heartbeatThread.join();
 
     return STATUS_OK;
 }
