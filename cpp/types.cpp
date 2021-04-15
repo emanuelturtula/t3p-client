@@ -220,6 +220,7 @@ ErrorHandler :: ErrorHandler()
 
 void ErrorHandler :: printError(status_t status)
 {
+    sleep(2);
     cerr << StatusTranslator[status] << endl;
 }
 
