@@ -802,6 +802,7 @@ string get_player_name()
         getline(cin, playerName);
         nameCorrect = isPlayerNameCorrect(playerName);
     }
+    return playerName;
 }
 
 bool isPlayerNameCorrect(string playerName)
