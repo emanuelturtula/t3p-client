@@ -15,29 +15,29 @@ status_t t3p_client()
     MatchInfo matchInfo;
     ErrorHandler errorHandler;
     thread heartbeatThread(heartbeat_thread, &context, &connectedSockfd);
-    get_player_name(&playerName);
 
     while (context != CLOSE_PROGRAM)
     {
         switch(context)
         {
             case MAIN_MENU:
-                if ((status = main_menu(&context)) != STATUS_OK) 
-                {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
-                }
+                main_menu(&context);
                 break;
-            case SEARCH_LOCAL_SERVERS:
+            case SEARCH_LOCAL_SERVERS_MENU:
                 if ((status = search_local_servers_menu(&context, &server)) != STATUS_OK) 
                 {
                     errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 break;
-            case SEARCH_BY_IP:
+            case SEARCH_BY_IP_MENU:
                 if ((status = search_by_ip_menu(&context, &server)) != STATUS_OK) 
                 {
                     errorHandler.handle_error(status,&context,connectedSockfd);
                 }
+                break;
+            case FAST_CONNECT_MENU:
+                cout << "Not implemented" << endl;
+                context = CLOSE_PROGRAM;
                 break;
             case READY_TO_CONNECT:
                 if ((status = connect_menu(&context, server)) != STATUS_OK) 
@@ -46,9 +46,11 @@ status_t t3p_client()
                 }
                 break;
             case CONNECT:
+                get_player_name(&playerName);
                 if ((status = login(server, playerName, &connectedSockfd)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+                    cerr << "Error bad login" << endl;
+                    //errorHandler.handle_error(status, &context, connectedSockfd);
                 }
                 else 
                     context = LOBBY_MENU;
@@ -73,18 +75,18 @@ status_t t3p_client()
                     errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 break;      
-            case IN_A_GAME:
-                if ((status = in_a_game_context(connectedSockfd, &context, matchInfo)) != STATUS_OK) 
-                {
-                    // Handle error
-                }
-                break;
             case READY_TO_PLAY:
                 //Here we begin a new game. We must wait until we receive the first TURN.
                 //We set up everything to begin.
                 if((status = ready_to_play_context_setup(connectedSockfd, &context, &matchInfo)) != STATUS_OK)
                 {
                     errorHandler.handle_error(status,&context,connectedSockfd);
+                }
+                break;
+            case IN_A_GAME:
+                if ((status = in_a_game_context(connectedSockfd, &context, matchInfo)) != STATUS_OK) 
+                {
+                    // Handle error
                 }
                 break;
             case LOGOUT_CONTEXT:

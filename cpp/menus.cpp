@@ -42,9 +42,6 @@ void get_player_name(string *playerName){
 
 status_t main_menu(context_t *context)
 {
-    /**
-     * 
-     */
     string selection;
     *context = MAIN_MENU;
     system("clear");
@@ -53,12 +50,15 @@ status_t main_menu(context_t *context)
     {
         cout << "Please select one option" << endl;
         cout << "1 - Search local servers" << endl;
-        cout << "2 - Search by IP" << endl << endl;
+        cout << "2 - Search by IP" << endl;
+        cout << "3 - Fast connect" << endl << endl;
         getline(cin, selection);
-        if (selection.compare("1") == 0)
-            (*context) = SEARCH_LOCAL_SERVERS;
-        else if (selection.compare("2") == 0)
-            (*context) = SEARCH_BY_IP;
+        if (selection == "1")
+            (*context) = SEARCH_LOCAL_SERVERS_MENU;
+        else if (selection == "2")
+            (*context) = SEARCH_BY_IP_MENU;
+        else if (selection == "3")
+            (*context) = FAST_CONNECT_MENU;
         else 
             cerr << "Error. Not an option" << endl << endl;
     }
@@ -77,6 +77,7 @@ status_t search_local_servers_menu(context_t *context, Server *server)
     string selection;
     bool valid_choice = false;
     regex ip_checker("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+    
     system("clear");
     cout << SEARCH_LOCAL_SERVERS_MENU_TITLE << endl;
     while (*context != READY_TO_CONNECT)
@@ -88,10 +89,8 @@ status_t search_local_servers_menu(context_t *context, Server *server)
         {
             cerr << "There are no servers available in local network." << endl;
             if (!scanAgain())
-            {
                 *context = MAIN_MENU;
-                return STATUS_OK;
-            }    
+            return STATUS_OK;
         }
         else 
         {
@@ -107,12 +106,10 @@ status_t search_local_servers_menu(context_t *context, Server *server)
 
             if (serverList.empty())
             {
-                cerr << "There servers in local network, but they are not responding correctly." << endl;
+                cerr << "There are servers in local network, but they are not responding correctly." << endl;
                 if (!scanAgain())
-                {
                     *context = MAIN_MENU;
-                    return STATUS_OK;
-                }    
+                return STATUS_OK;   
             }
             else
             {
@@ -691,6 +688,7 @@ status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo)
         { 
             // if it is not my turn
             system("clear");
+            matchInfo.printSlots();
             cout << "Waiting other player's move." << endl;
         }
 

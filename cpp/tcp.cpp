@@ -469,7 +469,7 @@ status_t poll_tcp_message(int sockfd, string *data_stream){
     pfds[0].fd = sockfd;        // Sock input
     pfds[0].events = POLLIN;    // Tell me when ready to read
 
-    int num_events = poll(pfds, 1, 5000); // We pool for 5 sec.
+    int num_events = poll(pfds, 1, 30000); // We pool for 30 sec.
 
     if (num_events == 0) {
         (*data_stream) == ""; // We do not return anything
