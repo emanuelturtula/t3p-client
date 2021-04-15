@@ -129,7 +129,7 @@ status_t parse_response(string response, T3PResponse *t3pResponse)
 
     // Find terminating sequence
     if ((pos = response.rfind(" \r\n \r\n")) == string::npos)
-        return ERROR_BAD_MESSAGE_FORMAT;
+        return ERROR_BAD_REQUEST;
 
     // Erase last " \r\n"
     response.erase(pos+3);
@@ -137,7 +137,7 @@ status_t parse_response(string response, T3PResponse *t3pResponse)
     for(i=0; i<2; i++)
     {
         if ((pos = response.find('|')) == string::npos)
-            return ERROR_BAD_MESSAGE_FORMAT;
+            return ERROR_BAD_REQUEST;
         tempStringList.push_back(response.substr(0, pos));
         response.erase(0, pos+1);
     }

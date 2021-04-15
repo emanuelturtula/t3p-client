@@ -75,7 +75,9 @@ void Slot :: clear()
     this->available = true;
 }
 
-/*Methods for MatchInformation*/
+/**
+ * Methods for MatchInfo
+ * */
 
 MatchInfo :: MatchInfo()
 {
@@ -86,7 +88,6 @@ MatchInfo :: MatchInfo()
     this->clearSlots();
 }
 
-
 void MatchInfo :: clearSlots()
 {
     int i;
@@ -96,14 +97,6 @@ void MatchInfo :: clearSlots()
     }
 }
 
-
-/*Prints Slots in next format example:
- o | - | x 
------------     
-   | x |   
------------
-   | x |   
-*/
 void MatchInfo::printSlots(){
 
     size_t line = 1;
@@ -198,3 +191,34 @@ map<string, tcpcommand_t> TCPCommandTranslator = {
     {"MATCHEND", MATCHEND}
 };
 
+map<status_t, string> StatusTranslator = {
+    {INFO_NO_PLAYERS_AVAILABLE, "INFORMATION - No players available"},
+    {ERROR_BAD_REQUEST, "ERROR - Bad request"},
+    {ERROR_INCORRECT_NAME, "ERROR - Incorrect name"},
+    {ERROR_NAME_TAKEN, "ERROR - Name taken"},
+    {ERROR_PLAYER_NOT_FOUND, "ERROR - Player not found"},
+    {ERROR_PLAYER_OCCUPIED, "ERROR - Player occupied"},
+    {ERROR_BAD_SLOT, "ERROR - Bad slot"},
+    {ERROR_NOT_TURN, "ERROR - Not your turn"},
+    {ERROR_INVALID_COMMAND, "ERROR - Invalid command"},
+    {ERROR_COMMAND_OUT_OF_CONTEXT, "ERROR - Command out of context"},
+    {ERROR_SERVER_ERROR, "ERROR - Server error"},
+    {ERROR_RECEIVING_MESSAGE, "ERROR - Receiving message"},
+    {ERROR_SENDING_MESSAGE, "ERROR - Sending message"},
+    {ERROR_SOCKET_CREATION, "ERROR - Socket creation"},
+    {ERROR_NO_SERVERS_ONLINE, "ERROR - No servers online"},
+    {ERROR_SETTING_MATCH, "ERROR - Setting match failed"},
+    {ERROR_CONNECTING, "ERROR - Connecting"},
+
+
+
+}
+
+void ErrorHandler :: printError(status_t status)
+{
+    
+}
+
+    ERROR_LOGIN,
+    ERROR_BAD_PLAYER_NAME,
+    ,

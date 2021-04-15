@@ -18,7 +18,6 @@ enum status_t {
     ERROR_SENDING_MESSAGE,
     ERROR_RECEIVING_MESSAGE,
     ERROR_NO_SERVERS_ONLINE,
-    ERROR_BAD_MESSAGE_FORMAT,
     ERROR_CONNECTING,
     ERROR_LOGIN,
     ERROR_STATUS_MESSAGE,
@@ -46,8 +45,6 @@ enum status_t {
     //5xx: Errors from server
     ERROR_SERVER_ERROR = 500,
 };
-
-
 
 enum context_t {
     MAIN_MENU,
@@ -160,7 +157,6 @@ extern map<status_t,string> DICTIONARY_InternalServerErrorsMessages;
 class ErrorHandler {
     public:
         ErrorHandler();
-        void handle_error(status_t status,context_t *context, int socket);
+        void printError(status_t status);
+        void handleError(status_t status, int *socket);
 };
-
-

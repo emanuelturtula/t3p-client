@@ -17,7 +17,6 @@
 #include "../headers/types.h"
 
 mutex msend;
-bool connected = false;
 
 using namespace std;
 
@@ -28,12 +27,9 @@ void heartbeat_thread(context_t *context, int *sockfd)
     {
         while((*context != MAIN_MENU) && (*context != SEARCH_LOCAL_SERVERS_MENU) && (*context != SEARCH_BY_IP_MENU) && (*context != CLOSE_PROGRAM))
         {
-            if (connected == true)
-            {
-                if (send_tcp_message(*sockfd, message) != STATUS_OK)
-                    return;
-                sleep(2);
-            }   
+            if (send_tcp_message(*sockfd, message) != STATUS_OK)
+                return;
+            sleep(2);
         }
         sleep(1);
     }
@@ -82,6 +78,7 @@ status_t get_connected_socket(string ip, int *sockfd)
 
 status_t login(int sockfd, string player_name)
 {
+    extern map<string, status_t> T3PStatusCodeMapper;
     status_t status;
     string message = "LOGIN|";
     T3PResponse t3pResponse;
@@ -94,15 +91,12 @@ status_t login(int sockfd, string player_name)
     if ((status = receive_tcp_message(sockfd, &t3pResponse)) != STATUS_OK)
         return status;
 
-    if (t3pResponse.statusMessage != "OK")
-        return ERROR_LOGIN;
-
-    connected = true;
-    return STATUS_OK;
+    return T3PStatusCodeMapper[t3pResponse.statusCode];
 }
 
 status_t logout(int sockfd)
 {
+    extern map<string, status_t> T3PStatusCodeMapper;
     status_t status;
     T3PResponse t3pResponse;
     const char *message = "LOGOUT \r\n \r\n";
@@ -111,12 +105,8 @@ status_t logout(int sockfd)
 
     if ((status = receive_tcp_message(sockfd, &t3pResponse)) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
-    
-    if (t3pResponse.statusMessage != "OK")
-        return T3PStatusCodeMapper[t3pResponse.statusCode];
 
-    connected = false;
-    return STATUS_OK;
+    return T3PStatusCodeMapper[t3pResponse.statusCode];
 }
 
 status_t invite(int sockfd, string player_name, T3PCommand *t3pCommand)
@@ -250,7 +240,7 @@ status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse)
     if (bytes < 0)
         return ERROR_RECEIVING_MESSAGE;
     if (parse_tcp_message(string(response), t3pResponse) != STATUS_OK)
-        return ERROR_BAD_MESSAGE_FORMAT;
+        return ERROR_BAD_REQUEST;
     return STATUS_OK;
 }
 
@@ -273,8 +263,8 @@ status_t receive_tcp_command(int sockfd, T3PCommand *t3pCommand)
 
     if (bytes > 0)
     {
-        if (parse_tcp_command(string(message), t3pCommand) != STATUS_OK)
-            return ERROR_BAD_REQUEST;
+        if ((status = parse_tcp_command(string(message), t3pCommand)) != STATUS_OK)
+            return status;
         t3pCommand->isNewCommand = true;
     }
     return STATUS_OK;   
@@ -300,17 +290,17 @@ status_t parse_tcp_message(string response, T3PResponse *t3pResponse)
     string statusMessage;
     
     if ((pos = response.rfind(" \r\n \r\n")) == string::npos)
-        return ERROR_BAD_MESSAGE_FORMAT;
+        return ERROR_BAD_REQUEST;
     response.erase(pos+3);
 
     if ((pos = response.find("|")) == string::npos)
-        return ERROR_BAD_MESSAGE_FORMAT;
+        return ERROR_BAD_REQUEST;
     
     statusCode = response.substr(0, pos);
     response.erase(0, pos+1);
 
     if ((pos = response.find(" \r\n")) == string::npos)
-        return ERROR_BAD_MESSAGE_FORMAT;
+        return ERROR_BAD_REQUEST;
     
     statusMessage = response.substr(0, pos);
 
