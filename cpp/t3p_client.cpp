@@ -2,6 +2,7 @@
 #include "../headers/types.h"
 #include "../headers/tcp.h"
 #include "../headers/menus.h"
+#include <unistd.h>
 #include <thread>
 
 status_t t3p_client()
@@ -13,7 +14,6 @@ status_t t3p_client()
     string invitationhost;
     int connectedSockfd;
     MatchInfo matchInfo;
-    ErrorHandler errorHandler;
     thread heartbeatThread(heartbeat_thread, &context, &connectedSockfd);
 
     while (context != CLOSE_PROGRAM)
@@ -49,9 +49,20 @@ status_t t3p_client()
                 break;
             case CONNECT:
                 get_player_name(&playerName);
-                if ((status = login(server, playerName, &connectedSockfd)) != STATUS_OK) 
+                cout << "Getting connected socket..." << endl;
+                if ((status = get_connected_socket(server.ip, &connectedSockfd)) != STATUS_OK)
+                {
+                    cerr << "Error connecting to server" << endl;
+                    sleep(2);
+                    context = MAIN_MENU;
+                }
+                cout << "OK." << endl;
+                cout << "Logging in..." << endl;
+                if ((status = login(connectedSockfd, playerName)) != STATUS_OK) 
                 {
                     cerr << "Error bad login" << endl;
+                    context = MAIN_MENU;
+                    close(connectedSockfd);
                 }
                 else 
                     context = LOBBY_MENU;
@@ -59,25 +70,25 @@ status_t t3p_client()
             case LOBBY_MENU:
                 if ((status = lobby_menu(&context, connectedSockfd)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+
                 }
                 break;
             case INVITE_MENU:
                 if ((status = invite_menu(&context, server, playerName, connectedSockfd)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+
                 }
                 break;
             case RANDOMINVITE_MENU:
                 if ((status = random_invite_menu(&context, connectedSockfd)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+
                 }
                 break;      
             case READY_TO_PLAY:
                 if((status = ready_to_play_context_setup(connectedSockfd, &context, &matchInfo)) != STATUS_OK)
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+
                 }
                 break;
             case IN_A_GAME:
@@ -87,10 +98,11 @@ status_t t3p_client()
                 }
                 break;
             case LOGOUT:
-                if ((status = logout(&connectedSockfd)) != STATUS_OK) 
+                if ((status = logout(connectedSockfd)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+                    // Handle error
                 }
+                close(connectedSockfd);
                 context = MAIN_MENU;
                 break;
             default:

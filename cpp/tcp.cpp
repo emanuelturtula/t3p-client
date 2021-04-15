@@ -9,7 +9,10 @@
 #include <regex>
 #include <map>
 #include <poll.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <iostream>
+#include <sys/select.h>
 #include "../headers/tcp.h"
 #include "../headers/types.h"
 
@@ -98,39 +101,60 @@ status_t T3PServerMessages::parse_buffer(string dataStream){
  * END--------Methods for T3PCommand
  * */
 
-status_t login(Server server, string player_name, int *sockfd)
+
+status_t get_connected_socket(string ip, int *sockfd)
 {
     struct sockaddr_in server_addr = {0};
-    const char *c_ip = server.ip.c_str();
-    const char *c_player_name = player_name.c_str();
-    char message[40] = {0};
-    T3PResponse t3pResponse;
+    struct timeval tv;
+    fd_set fdset;
+    
+    *sockfd = -1;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(TCP_PORT);
+    server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
 
     if ((*sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         return ERROR_SOCKET_CREATION;
+
+    fcntl((*sockfd), F_SETFL, O_NONBLOCK);
+
+    connect((*sockfd), (struct sockaddr *)&server_addr, sizeof(server_addr));
+
+    FD_ZERO(&fdset);
+    FD_SET((*sockfd), &fdset);
+    tv.tv_sec = 10;             /* 10 second timeout */
+    tv.tv_usec = 0;
+
+    if (select((*sockfd) + 1, NULL, &fdset, NULL, &tv) == 1)
+    {
+        int so_error;
+        socklen_t len = sizeof so_error;
+
+        getsockopt((*sockfd), SOL_SOCKET, SO_ERROR, &so_error, &len);
+
+        if (so_error == 0)
+        {
+            fcntl((*sockfd), F_SETFL, 0);
+            return STATUS_OK;
+        }
+    }
+
+    close(*sockfd);
+    return ERROR_CONNECTING;
+}
+
+status_t login(int sockfd, string player_name)
+{
+    string message = "LOGIN|";
+    T3PResponse t3pResponse;
     
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(TCP_PORT);
-    server_addr.sin_addr.s_addr = inet_addr(c_ip);
-
-    if (connect((*sockfd), (struct sockaddr *)&server_addr, sizeof(server_addr)) != 0)
-    {
-        close(*sockfd);
-        return ERROR_CONNECTING;
-    }
-
-    sprintf(message, "LOGIN|%s \r\n \r\n", c_player_name);
-    if (send_tcp_message((*sockfd), message) != STATUS_OK)
-    {
-        close(*sockfd);
+    message += player_name + " \r\n \r\n";
+    
+    if (send_tcp_message(sockfd, message.c_str()) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
-    }
 
-    if (receive_tcp_message((*sockfd), &t3pResponse) != STATUS_OK)
-    {
-        close(*sockfd);
+    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
         return ERROR_RECEIVING_MESSAGE;
-    }
 
     if (t3pResponse.statusMessage != "OK")
         return ERROR_LOGIN;
@@ -139,21 +163,20 @@ status_t login(Server server, string player_name, int *sockfd)
     return STATUS_OK;
 }
 
-status_t logout(int *sockfd)
+status_t logout(int sockfd)
 {
     T3PResponse t3pResponse;
     const char *message = "LOGOUT \r\n \r\n";
-    if (send_tcp_message(*sockfd, message) != STATUS_OK)
+    if (send_tcp_message(sockfd, message) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
 
-    if (receive_tcp_message(*sockfd, &t3pResponse) != STATUS_OK)
+    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
     
     if (t3pResponse.statusMessage != "OK")
         return T3PStatusCodeMapper[t3pResponse.statusCode];
 
     connected = false;
-    close(*sockfd);
     return STATUS_OK;
 }
 
@@ -161,8 +184,7 @@ status_t invite(int sockfd, string player_name, bool *response)
 {
     T3PResponse t3pResponse;
     T3PCommand t3pCommand;
-    const char *c_player_name = player_name.c_str();
-    char message[BUFFER_SIZE];
+    string message = "INVITE|";
     regex playerNameChecker("^[a-zA-Z]+$");
 
     // check if player's name is ok. Length must be between 3 and 20 chars, and it has to be alpha
@@ -172,10 +194,10 @@ status_t invite(int sockfd, string player_name, bool *response)
         return ERROR_BAD_PLAYER_NAME;
 
     // format string
-    sprintf(message, "INVITE|%s \r\n \r\n", c_player_name);
+    message += player_name + " \r\n \r\n";
     
     // send invite
-    if (send_tcp_message(sockfd, message) != STATUS_OK)
+    if (send_tcp_message(sockfd, message.c_str()) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
 
     // receive the 200|ok
@@ -185,12 +207,9 @@ status_t invite(int sockfd, string player_name, bool *response)
     if (t3pResponse.statusMessage != "OK")
         return ERROR_STATUS_MESSAGE;
 
+    // Wait for response from server
     if (receive_tcp_command(sockfd, &t3pCommand) != STATUS_OK)
         return ERROR_RECEIVING_MESSAGE;
-
-    *response = false;
-    if (t3pCommand.command == "ACCEPT")
-        *response = true;
 
     return STATUS_OK;
 }
@@ -304,7 +323,7 @@ status_t markslot(int sockfd, string slot)
 status_t send_tcp_message(int sockfd, const char *message)
 {
     lock_guard<mutex> guard(msend);
-    if (send(sockfd, message, strlen(message), 0) < 0)
+    if (send(sockfd, message, strlen(message), MSG_DONTWAIT) < 0)
         return ERROR_SENDING_MESSAGE;
     return STATUS_OK;
 }
