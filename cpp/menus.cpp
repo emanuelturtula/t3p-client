@@ -491,6 +491,18 @@ status_t invite_menu(context_t *context, Server server, string myPlayerName, int
                             return status;
                     }                
                 }
+                else
+                {
+                    if (invitePlayerName == "0")
+                    {
+                        *context = LOBBY_MENU;
+                        valid_input = true;
+                    }
+                    else
+                    {
+                        cout << "This name is not allowed, please select another" << endl;
+                    }
+                }
             }
         #endif
     }
@@ -801,6 +813,8 @@ string get_player_name()
         cout << "(Min. 3 and Max. 20 characters long. Only alphabetic characters allowed)" << endl;
         getline(cin, playerName);
         nameCorrect = isPlayerNameCorrect(playerName);
+        if (!nameCorrect)
+            cout << "This name is not allowed, please select another" << endl;
     }
     return playerName;
 }
@@ -810,8 +824,7 @@ bool isPlayerNameCorrect(string playerName)
     bool nameCorrect = false;
     regex playerNameChecker("^[a-zA-Z]+$");
     if ((playerName.size() < 3 || playerName.size() > 20) ||
-        (!regex_match(playerName, playerNameChecker)))
-        cout << "This name is not allowed, please select another" << endl;
+        (!regex_match(playerName, playerNameChecker)));
     else
         nameCorrect = true;
     return nameCorrect;
