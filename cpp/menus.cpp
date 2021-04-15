@@ -722,8 +722,6 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
         if ((status = receive_tcp_command(sockfd, &t3pCommand)) != STATUS_OK)
             return status;
             
-        cout << t3pCommand.command << endl;
-
         if (t3pCommand.command == "TURNWAIT")
         {
             if ((status = send_tcp_message(sockfd, "200|OK \r\n \r\n")) != STATUS_OK)
@@ -760,7 +758,7 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
                 cout << "Match ended in draw!" << endl;
             else if (t3pCommand.dataList.front().find("CONNECTIONLOST") != string::npos)
                 cout << "The other player lost connection" << endl;
-            sleep(2);
+            sleep(4);
             *context = LOBBY_MENU;
         }
     }

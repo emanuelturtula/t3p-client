@@ -35,7 +35,7 @@ void heartbeat_thread(context_t *context, int *sockfd)
                 sleep(2);
             }   
         }
-        sleep(2);
+        sleep(1);
     }
 }
 
