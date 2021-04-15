@@ -15,7 +15,7 @@ status_t lobby_menu(context_t *context, int sockfd);
 status_t invite_menu(context_t *context, Server server, string myPlayerName, int connectedSockfd);
 status_t received_invite_menu(context_t *context, int connectedSockfd, string invitingPlayerName);
 status_t random_invite_menu(context_t *context, int connectedSockfd);
-status_t ready_to_play_context_setup(int sockfd, context_t *context, MatchInfo *matchInfo);
+status_t ready_to_play_context(context_t *context, int sockfd, MatchInfo *matchInfo);
 status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo);
 
 string get_player_name();

@@ -514,16 +514,19 @@ status_t invite_menu(context_t *context, Server server, string myPlayerName, int
 
 status_t received_invite_menu(context_t *context, int connectedSockfd, string invitingPlayerName)
 {
+    status_t status;
     string selection = "";
     string argument;
     string socket_message = "";
+
     system("clear");
     cout << RECEIVED_INVITE_MENU << endl;
-    cout << invitingPlayerName + " is inviting you to a match. Type Y to accept or N to decline.\n\n";
+    cout << invitingPlayerName + " is inviting you to a match. Type y to accept or n to decline.\n\n";
     bool waiting_answer = true;
     while (waiting_answer)
     {
-        poll_event(connectedSockfd, &selection, &socket_message);
+        if ((status = poll_event(connectedSockfd, &selection, &socket_message)) != STATUS_OK)
+            return status;
         if (socket_message != "")
         {
             switch(parse_tcp_command(socket_message, &argument))
@@ -537,13 +540,13 @@ status_t received_invite_menu(context_t *context, int connectedSockfd, string in
         }
         else
         {
-            if (selection == "Y")
+            if (selection == "y")
             {
                 send_tcp_message(connectedSockfd, "ACCEPT \r\n \r\n");
                 waiting_answer = false;
                 *context = READY_TO_PLAY;
             }
-            else if (selection == "N")
+            else if (selection == "n")
             {
                 send_tcp_message(connectedSockfd, "DECLINE \r\n \r\n");
                 waiting_answer = false;
@@ -566,21 +569,12 @@ status_t random_invite_menu(context_t *context, int connectedSockfd)
     cout << RANDOMINVITE_MENU_TITLE << endl;
     cout << "Sending random invite message..." << endl;
     if ((status = random_invite(connectedSockfd, &t3pCommand)) != STATUS_OK)
-    {
-        if (status == INFO_NO_PLAYERS_AVAILABLE)
-            cout << "No players available" << endl;
-        else
-            cerr << "Error. Random invite failed" << endl;
-        *context = LOBBY_MENU;
-        sleep(2);
         return status;
-    }
     
     if (t3pCommand.command == "ACCEPT")
     {
         cout << "A player accepted!" << endl;
         (*context) = READY_TO_PLAY;
-        sleep(2);
     }
     else if (t3pCommand.command == "DECLINE") 
     {
@@ -598,49 +592,42 @@ status_t random_invite_menu(context_t *context, int connectedSockfd)
     return STATUS_OK;
 }
 
-status_t ready_to_play_context_setup(int sockfd, context_t *context, MatchInfo *matchInfo){
-
+status_t ready_to_play_context(context_t *context, int sockfd, MatchInfo *matchInfo)
+{
     status_t status;
     string first_turn;
-    T3PServerMessages t3pserverMessage;
-    matchInfo->clearSlots(); // we set a empty MatchInfo
+    T3PCommand t3pCommand;
+
+    *context = READY_TO_PLAY;
+
+    matchInfo->clearSlots(); 
     matchInfo->playerSymbol = EMPTY;
 
-    cout << "Beginning new MATCH" << endl;
+    cout << "Waiting server information to start the match" << endl;
 
-    // Here we should get a first TURN:
-    if ( (status = poll_tcp_message(sockfd, &first_turn)) != STATUS_OK)
+    // Receive the command TURNPLAY or TURNWAIT
+    if ((status = receive_tcp_command(sockfd, &t3pCommand)) != STATUS_OK)
         return status;
 
-        
-    if( (status = t3pserverMessage.parse_buffer(first_turn)) != STATUS_OK)
+    if (t3pCommand.command == "TURNPLAY")
     {
-        *context = LOBBY_MENU;
-        cerr << "Error. Server didn't send match start" << endl;
-        sleep(2);
-        return status;
-    }
-
-
-    if (first_turn == ""){
-        return ERROR_READY_TO_PLAY_MATCH_NOT_SET_FROM_SERVER;
-    }
-
-    // Here we check wich turn is it and we set up "matchInfo"
-    if(t3pserverMessage.getName() == "TURNPLAY"){ // We are circle (circle starts)
+        // CIRCLE player is always the one to start
         matchInfo->playerSymbol = CIRCLE;
         matchInfo->myTurn = true;
         *context = IN_A_GAME;
-
-    } else if (t3pserverMessage.getName() == "TURNWAIT"){ // We are cross
+    }
+    else if (t3pCommand.command == "TURNWAIT")
+    {
         matchInfo->playerSymbol = CROSS;
         matchInfo->myTurn = false;
         *context = IN_A_GAME;
     }
-    else{
-        (*context) = LOBBY_MENU;
-        return ERROR_READY_TO_PLAY_MATCH_NOT_SET_FROM_SERVER;
+    else 
+    {
+        //Weird case
+        return ERROR_SETTING_MATCH;
     }
+        
     return STATUS_OK;
 }
 

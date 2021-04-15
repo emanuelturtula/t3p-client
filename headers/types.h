@@ -23,19 +23,9 @@ enum status_t {
     ERROR_LOGIN,
     ERROR_STATUS_MESSAGE,
     ERROR_BAD_PLAYER_NAME,
-    ERROR_OUT_OF_CONTEXT,
-    ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM,
-    ERROR_POLL_DETECTED_0_EVENTS,
-
-    ERROR_NOT_RECIVIED_INVTEFROM,
-    ERROR_READY_TO_PLAY_MATCH_NOT_SET_FROM_SERVER,
-
-
+    ERROR_COMMAND_OUT_OF_CONTEXT,
+    ERROR_SETTING_MATCH,
     ERROR_NULL_POINTER,
-
-    // This next status_t indicates number of status_t errors that exist in the program:
-    // Currently, we have 20 possible errors:
-    NUMBER_OF_INTERNAL_ERRORS_DEFINED_IN_CLIENT_PROGRAM, 
 
     /*******************************/
     // RFC Responses:
