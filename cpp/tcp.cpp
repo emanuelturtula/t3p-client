@@ -72,7 +72,6 @@ status_t get_connected_socket(string ip, int *sockfd)
         }
     }
 
-    close(*sockfd);
     return ERROR_CONNECTING;
 }
 
@@ -101,10 +100,10 @@ status_t logout(int sockfd)
     T3PResponse t3pResponse;
     const char *message = "LOGOUT \r\n \r\n";
     if ((status = send_tcp_message(sockfd, message)) != STATUS_OK)
-        return ERROR_SENDING_MESSAGE;
+        return status;
 
     if ((status = receive_tcp_message(sockfd, &t3pResponse)) != STATUS_OK)
-        return ERROR_SENDING_MESSAGE;
+        return status;
 
     return T3PStatusCodeMapper[t3pResponse.statusCode];
 }

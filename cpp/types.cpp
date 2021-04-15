@@ -227,7 +227,9 @@ void ErrorHandler :: handleError(status_t status, context_t *context, int *socke
 {
     this->printError(status);
     if ((status == ERROR_SENDING_MESSAGE) ||
-        (status == ERROR_RECEIVING_MESSAGE))
+        (status == ERROR_RECEIVING_MESSAGE) ||
+        (status == ERROR_SERVER_ERROR) ||
+        (status == ERROR_SETTING_MATCH))
     {
         if (socket != NULL)
             close(*socket);

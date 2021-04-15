@@ -16,7 +16,7 @@ status_t invite_menu(context_t *context, Server server, string myPlayerName, int
 status_t received_invite_menu(context_t *context, int connectedSockfd, string invitingPlayerName);
 status_t random_invite_menu(context_t *context, int connectedSockfd);
 status_t ready_to_play_context(context_t *context, int sockfd, MatchInfo *matchInfo);
-status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo);
+status_t in_a_game_context(context_t *context, int sockfd, MatchInfo *matchInfo);
 
 string get_player_name();
 bool isPlayerNameCorrect(string playerName);

@@ -295,7 +295,8 @@ status_t lobby_menu(context_t *context, int connectedSockfd)
         cout << "1 - Invite a Player" << endl;
         cout << "2 - Random Match" << endl;
         cout << "3 - Logout" << endl << endl;
-        poll_event(connectedSockfd, &selection, &socket_message);
+        if ((status = poll_event(connectedSockfd, &selection, &socket_message)) != STATUS_OK)
+            return status;
         if (socket_message != "")
         {
             switch (parse_tcp_command(socket_message, &invitingPlayerName))
@@ -631,7 +632,7 @@ status_t ready_to_play_context(context_t *context, int sockfd, MatchInfo *matchI
     return STATUS_OK;
 }
 
-status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
+status_t in_a_game_context(context_t *context, int sockfd, MatchInfo *matchInfo)
 {
     status_t status;
     string stdin_message;
@@ -649,11 +650,11 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
     while (*context == IN_A_GAME)
     {
         // print the board
-        matchInfo.printSlots();
-        if (matchInfo.myTurn)
+        matchInfo->printSlots();
+        if (matchInfo->myTurn)
         {
             cout << "It's your turn. Please choose the next slot number to mark." << endl;
-            matchInfo.printSlotsNumpad();
+            matchInfo->printSlotsNumpad();
             cout << "To giveup match, please write 0.\n" << endl;
             // If it is my turn, I need to tell the player to enter a slot number
             valid_input = false;
@@ -692,18 +693,18 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
                         else 
                         {
                             slot_number = stoi(stdin_message)-1;
-                            if (matchInfo.getSlots()[slot_number] != EMPTY)
+                            if (matchInfo->getSlots()[slot_number] != EMPTY)
                                 cerr << "Error. The slot is occupied. Please enter another one" << endl;
                             else 
                             {
                                 if ((status = markslot(sockfd, stdin_message)) != STATUS_OK)
                                     return status;
                                 valid_input = true;
-                                if (matchInfo.playAsCirle)
-                                    matchInfo.setSlots(stdin_message, "");
+                                if (matchInfo->playAsCirle)
+                                    matchInfo->setSlots(stdin_message, "");
                                 else 
-                                    matchInfo.setSlots("", stdin_message);
-                                matchInfo.printSlots();
+                                    matchInfo->setSlots("", stdin_message);
+                                matchInfo->printSlots();
                             }
                         }
                     }
@@ -713,7 +714,7 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
         else
         { 
             system("clear");
-            matchInfo.printSlots();
+            matchInfo->printSlots();
             cout << "Waiting other player's move." << endl;
         }
 
@@ -726,23 +727,23 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
         {
             if ((status = send_tcp_message(sockfd, "200|OK \r\n \r\n")) != STATUS_OK)
                 return status;
-            matchInfo.myTurn = false;
+            matchInfo->myTurn = false;
             slots = t3pCommand.dataList.front();
             crossSlots = slots.substr(0, slots.find("|"));
             slots.erase(0, slots.find("|") + 1);
             circleSlots = slots.substr(0, slots.find(" \r\n \r\n"));
-            matchInfo.setSlots(circleSlots, crossSlots);
+            matchInfo->setSlots(circleSlots, crossSlots);
         }
         else if (t3pCommand.command == "TURNPLAY")
         {
             if ((status = send_tcp_message(sockfd, "200|OK \r\n \r\n")) != STATUS_OK)
                 return status;
-            matchInfo.myTurn = true;
+            matchInfo->myTurn = true;
             slots = t3pCommand.dataList.front();
             crossSlots = slots.substr(0, slots.find("|"));
             slots.erase(0, slots.find("|") + 1);
             circleSlots = slots.substr(0, slots.find(" \r\n \r\n"));
-            matchInfo.setSlots(circleSlots, crossSlots);
+            matchInfo->setSlots(circleSlots, crossSlots);
         }
         else if (t3pCommand.command == "MATCHEND")
         {
