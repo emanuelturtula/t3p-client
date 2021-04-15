@@ -26,7 +26,7 @@ void heartbeat_thread(context_t *context, int *sockfd)
     const char *message = "HEARTBEAT \r\n \r\n";
     while (*context != CLOSE_PROGRAM)
     {
-        while((*context != MAIN_MENU) && (*context != SEARCH_LOCAL_SERVERS_MENU) && (*context != SEARCH_BY_IP_MENU))
+        while((*context != MAIN_MENU) && (*context != SEARCH_LOCAL_SERVERS_MENU) && (*context != SEARCH_BY_IP_MENU) && (*context != CLOSE_PROGRAM))
         {
             if (connected == true)
             {

@@ -670,9 +670,7 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
             while (valid_input == false)
             {
                 if ((status = poll_event(sockfd, &stdin_message, &socket_message)) != STATUS_OK)
-                {
-                    // Handle error
-                }  
+                    return status
                 if (socket_message != "")
                 {
                     // If we got here, probably it's because we lost due to timeout. Also it could happen
