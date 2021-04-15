@@ -645,16 +645,6 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
     bool valid_input = false;
     *context = IN_A_GAME;
     system("clear");
-    if (matchInfo.myTurn)
-    {
-        matchInfo.playAsCirle = true;
-        cout << "You play as CIRCLE\n\n\n" << endl;
-    }
-    else
-    {
-        matchInfo.playAsCirle = false;
-        cout << "You play as CROSS\n\n\n" << endl;
-    }
         
     while (*context == IN_A_GAME)
     {
@@ -670,7 +660,7 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
             while (valid_input == false)
             {
                 if ((status = poll_event(sockfd, &stdin_message, &socket_message)) != STATUS_OK)
-                    return status
+                    return status;
                 if (socket_message != "")
                 {
                     // If we got here, probably it's because we lost due to timeout. Also it could happen
@@ -695,9 +685,7 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
                         {
                             // 0 is to giveup.
                             if ((status = giveup(sockfd)) != STATUS_OK)
-                            {
-                                // handle error
-                            }
+                                return status;
                             *context = LOBBY_MENU;
                             valid_input = true;
                         }
@@ -709,9 +697,7 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
                             else 
                             {
                                 if ((status = markslot(sockfd, stdin_message)) != STATUS_OK)
-                                {
-                                    // handle error
-                                }
+                                    return status;
                                 valid_input = true;
                                 if (matchInfo.playAsCirle)
                                     matchInfo.setSlots(stdin_message, "");
@@ -726,7 +712,6 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
         }
         else
         { 
-            // if it is not my turn
             system("clear");
             matchInfo.printSlots();
             cout << "Waiting other player's move." << endl;
@@ -735,19 +720,14 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
         // Wait till the Server tells us TURNWAIT, TURNPLAY or MATCHEND.
         // TURNWAIT and TURNPLAY needs to be answered with a 200 OK.
         if ((status = receive_tcp_command(sockfd, &t3pCommand)) != STATUS_OK)
-        {
-            cerr << "Error receiving command" << endl;
-            return STATUS_OK;
-        }
+            return status;
             
         cout << t3pCommand.command << endl;
 
         if (t3pCommand.command == "TURNWAIT")
         {
             if ((status = send_tcp_message(sockfd, "200|OK \r\n \r\n")) != STATUS_OK)
-            {
-                // handle error
-            }
+                return status;
             matchInfo.myTurn = false;
             slots = t3pCommand.dataList.front();
             crossSlots = slots.substr(0, slots.find("|"));
@@ -758,9 +738,7 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
         else if (t3pCommand.command == "TURNPLAY")
         {
             if ((status = send_tcp_message(sockfd, "200|OK \r\n \r\n")) != STATUS_OK)
-            {
-                // handle error
-            }
+                return status;
             matchInfo.myTurn = true;
             slots = t3pCommand.dataList.front();
             crossSlots = slots.substr(0, slots.find("|"));
@@ -782,9 +760,7 @@ status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
                 cout << "Match ended in draw!" << endl;
             else if (t3pCommand.dataList.front().find("CONNECTIONLOST") != string::npos)
                 cout << "The other player lost connection" << endl;
-            
-
-            sleep(5);
+            sleep(2);
             *context = LOBBY_MENU;
         }
     }
