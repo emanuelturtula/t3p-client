@@ -26,23 +26,25 @@ status_t t3p_client()
             case SEARCH_LOCAL_SERVERS_MENU:
                 if ((status = search_local_servers_menu(&context, &server)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+
                 }
                 break;
             case SEARCH_BY_IP_MENU:
                 if ((status = search_by_ip_menu(&context, &server)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+                    
                 }
                 break;
             case FAST_CONNECT_MENU:
-                cout << "Not implemented" << endl;
-                context = CLOSE_PROGRAM;
+                if ((status = fast_connect_menu(&context, &server)) != STATUS_OK) 
+                {
+                    
+                }
                 break;
             case READY_TO_CONNECT:
                 if ((status = connect_menu(&context, server)) != STATUS_OK) 
                 {
-                    errorHandler.handle_error(status,&context,connectedSockfd);
+                    
                 }
                 break;
             case CONNECT:
@@ -50,7 +52,6 @@ status_t t3p_client()
                 if ((status = login(server, playerName, &connectedSockfd)) != STATUS_OK) 
                 {
                     cerr << "Error bad login" << endl;
-                    //errorHandler.handle_error(status, &context, connectedSockfd);
                 }
                 else 
                     context = LOBBY_MENU;
@@ -61,23 +62,19 @@ status_t t3p_client()
                     errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 break;
-            case SEND_INVITE_MENU:
-                // go to invite menu
+            case INVITE_MENU:
                 if ((status = invite_menu(&context, server, playerName, connectedSockfd)) != STATUS_OK) 
                 {
                     errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 break;
-            case SEND_RANDOMINVITE_MENU:
-                // go to random invite menu
+            case RANDOMINVITE_MENU:
                 if ((status = random_invite_menu(&context, connectedSockfd)) != STATUS_OK) 
                 {
                     errorHandler.handle_error(status,&context,connectedSockfd);
                 }
                 break;      
             case READY_TO_PLAY:
-                //Here we begin a new game. We must wait until we receive the first TURN.
-                //We set up everything to begin.
                 if((status = ready_to_play_context_setup(connectedSockfd, &context, &matchInfo)) != STATUS_OK)
                 {
                     errorHandler.handle_error(status,&context,connectedSockfd);
@@ -89,7 +86,7 @@ status_t t3p_client()
                     // Handle error
                 }
                 break;
-            case LOGOUT_CONTEXT:
+            case LOGOUT:
                 if ((status = logout(&connectedSockfd)) != STATUS_OK) 
                 {
                     errorHandler.handle_error(status,&context,connectedSockfd);

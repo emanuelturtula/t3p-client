@@ -15,31 +15,6 @@ using namespace std;
 bool scanAgain();
 bool parse_list_of_players(string players, vector<string> *parsedPlayers); 
 
-
-void get_player_name(string *playerName){
-
-    bool nameCorrect = false;
-
-    while(nameCorrect == false){
-
-        regex playerNameChecker("^[a-zA-Z]+$");
-
-        cout << "Please, enter your player name:" << endl;
-        cout << "(min. 3 and max. 20 characters long. Only Alpha char allowed [a-z])" << endl;
-
-        getline(cin,*playerName);
-
-        if  ((playerName->size() < 3 || playerName->size() > 20) ||
-            (!regex_match(*playerName, playerNameChecker))){
- 
-            cout << "This name is not allowed, please select another" << endl;
-        }else{
-            nameCorrect = true;
-        }
-    }
-}
-
-
 status_t main_menu(context_t *context)
 {
     string selection;
@@ -67,27 +42,28 @@ status_t main_menu(context_t *context)
 
 status_t search_local_servers_menu(context_t *context, Server *server)
 {
-    /**
-     * 
-     */
     list<T3PResponse> t3pResponseList;
     list<Server> serverList;
     T3PResponse t3pResponse;
     status_t status;
     string selection;
+    string ip;
     bool valid_choice = false;
     regex ip_checker("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
-    
+    *context = SEARCH_LOCAL_SERVERS_MENU;
+
     system("clear");
     cout << SEARCH_LOCAL_SERVERS_MENU_TITLE << endl;
-    while (*context != READY_TO_CONNECT)
+    while (*context == SEARCH_LOCAL_SERVERS_MENU)
     {
-        t3pResponseList.clear();
         serverList.clear();
         cout << "Searching local servers" << endl;
         if ((status = send_discover_broadcast(&t3pResponseList)) != STATUS_OK)
+            return status;
+
+        if (t3pResponseList.empty())
         {
-            cerr << "There are no servers available in local network." << endl;
+            cout << "There are no servers available in local network." << endl;
             if (!scanAgain())
                 *context = MAIN_MENU;
             return STATUS_OK;
@@ -96,7 +72,7 @@ status_t search_local_servers_menu(context_t *context, Server *server)
         {
             for(auto const& t3pResponseItem : t3pResponseList) 
             {
-                string ip = t3pResponseItem.dataList.front();
+                ip = t3pResponseItem.dataList.front();
                 if (regex_match(ip, ip_checker))
                 {
                     Server tempServer(ip);
@@ -125,7 +101,7 @@ status_t search_local_servers_menu(context_t *context, Server *server)
                 {
                     cout << "Please select a server number or type '\\back' to go back to main menu" << endl;
                     getline(cin, selection);
-                    if (selection.compare("\\back") == 0)
+                    if (selection == "\\back")
                     {
                         *context = MAIN_MENU;
                         return STATUS_OK;
@@ -153,18 +129,20 @@ status_t search_local_servers_menu(context_t *context, Server *server)
         }
 
         if ((status = send_discover((*server).ip, &t3pResponse)) != STATUS_OK)
+        {
             cerr << "Error getting information from server" << endl;
+            sleep(2);
+            return status;
+        }
         else
         {
+            server->playersAvailable.clear();
+            server->playersOccupied.clear();
             if (!t3pResponse.dataList.front().empty())
-            {
                 (*server).setAvailablePlayers(t3pResponse.dataList.front());
-            }
             t3pResponse.dataList.pop_front();
             if (!t3pResponse.dataList.front().empty())
-            {
                 (*server).setOccupiedPlayers(t3pResponse.dataList.front());
-            }
             (*context) = READY_TO_CONNECT;
         }
     }
@@ -175,14 +153,14 @@ status_t search_by_ip_menu(context_t *context, Server *server)
 {
     status_t status;
     bool valid_ip;
+    string ip;
     regex ip_checker("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
     T3PResponse t3pResponse;
 
     system("clear");
     cout << SEARCH_BY_IP_MENU_TITLE << endl;
-    while (*context == SEARCH_BY_IP)
+    while (*context == SEARCH_BY_IP_MENU)
     {
-        string ip;
         valid_ip = false;
         while (valid_ip == false)
         {
@@ -191,7 +169,7 @@ status_t search_by_ip_menu(context_t *context, Server *server)
             valid_ip = regex_match(ip, ip_checker);
             if (!valid_ip)
             {
-                if (ip.compare("\\back") == 0)
+                if (ip == "\\back")
                 {
                     *context = MAIN_MENU;
                     return STATUS_OK;
@@ -202,10 +180,16 @@ status_t search_by_ip_menu(context_t *context, Server *server)
         }
 
         if ((status = send_discover(ip, &t3pResponse)) != STATUS_OK)
+        {
             cerr << "Error getting information from server" << endl;
+            sleep(2);
+            return status;
+        }
         else
         {
             (*server).ip = ip;
+            server->playersAvailable.clear();
+            server->playersOccupied.clear();
             if (!t3pResponse.dataList.front().empty())
                 (*server).setAvailablePlayers(t3pResponse.dataList.front());
             t3pResponse.dataList.pop_front();
@@ -214,6 +198,44 @@ status_t search_by_ip_menu(context_t *context, Server *server)
             *context = READY_TO_CONNECT;
         }
     }
+    return STATUS_OK;
+}
+
+status_t fast_connect_menu(context_t *context, Server *server)
+{
+    string ip;
+    bool valid_ip;
+    regex ip_checker("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+
+    system("clear");
+    cout << FAST_CONNECT_MENU_TITLE << endl;
+    *context = FAST_CONNECT_MENU;
+    while(*context == FAST_CONNECT_MENU)
+    {
+        valid_ip = false;
+        while (valid_ip == false)
+        {
+            cout << "Please insert the server IP or type \\back to go back to main menu" << endl;
+            getline(cin, ip);
+            valid_ip = regex_match(ip, ip_checker);
+            if (!valid_ip)
+            {
+                if (ip == "\\back")
+                {
+                    *context = MAIN_MENU;
+                    return STATUS_OK;
+                }
+                else
+                    cerr << "Error. Wrong IP format." << endl;
+            }
+            else
+            {
+                server->ip = ip;
+                *context = CONNECT;
+            }
+        }
+    }
+
     return STATUS_OK;
 }
 
@@ -256,13 +278,11 @@ status_t connect_menu(context_t *context, Server server)
 
 status_t lobby_menu(context_t *context, int connectedSockfd)
 {
-    /**
-     * 
-     */
     status_t status;
     string selection;
     string socket_message;
     string invitingPlayerName;
+
     *context = LOBBY_MENU;
     system("clear");
     cout << LOBBY_MENU_TITLE << endl;
@@ -293,11 +313,11 @@ status_t lobby_menu(context_t *context, int connectedSockfd)
         else 
         {
             if (selection.compare("1") == 0)
-                (*context) = SEND_INVITE_MENU;
+                (*context) = INVITE_MENU;
             else if (selection.compare("2") == 0)
-                (*context) = SEND_RANDOMINVITE_MENU;  
+                (*context) = RANDOMINVITE_MENU;  
             else if (selection.compare("3") == 0)
-                (*context) = LOGOUT_CONTEXT;                    
+                (*context) = LOGOUT;                    
             else 
                 cerr << "Error. Not an option\n\n" << endl << endl;
         }
@@ -321,7 +341,7 @@ status_t invite_menu(context_t *context, Server server, string myPlayerName, int
     vector<string> availablePlayersList;
     bool valid_input = false;
 
-    *context = SEND_INVITE_MENU;
+    *context = INVITE_MENU;
     system("clear");
     cout << INVITE_MENU_TITLE << endl;
     while (!valid_input)
@@ -470,7 +490,7 @@ status_t random_invite_menu(context_t *context, int connectedSockfd)
 {
     status_t status;
     T3PCommand t3pCommand;
-    *context = SEND_RANDOMINVITE_MENU;
+    *context = RANDOMINVITE_MENU;
     system("clear");
 
     cout << RANDOMINVITE_MENU_TITLE << endl;
@@ -749,4 +769,22 @@ status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo)
         }
     }
     return STATUS_OK;
+}
+
+void get_player_name(string *playerName)
+{
+    bool nameCorrect = false;
+    regex playerNameChecker("^[a-zA-Z]+$");
+
+    while(nameCorrect == false)
+    {
+        cout << "Please, enter your player name:" << endl;
+        cout << "(Min. 3 and Max. 20 characters long. Only alphabetic characters allowed)" << endl;
+        getline(cin,*playerName);
+        if ((playerName->size() < 3 || playerName->size() > 20) ||
+            (!regex_match(*playerName, playerNameChecker)))
+            cout << "This name is not allowed, please select another" << endl;
+        else
+            nameCorrect = true;
+    }
 }
