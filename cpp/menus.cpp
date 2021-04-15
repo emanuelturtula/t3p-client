@@ -26,7 +26,8 @@ status_t main_menu(context_t *context)
         cout << "Please select one option" << endl;
         cout << "1 - Search local servers" << endl;
         cout << "2 - Search by IP" << endl;
-        cout << "3 - Fast connect" << endl << endl;
+        cout << "3 - Fast connect" << endl;
+        cout << "0 - Exit program" << endl << endl;
         getline(cin, selection);
         if (selection == "1")
             (*context) = SEARCH_LOCAL_SERVERS_MENU;
@@ -34,6 +35,8 @@ status_t main_menu(context_t *context)
             (*context) = SEARCH_BY_IP_MENU;
         else if (selection == "3")
             (*context) = FAST_CONNECT_MENU;
+        else if (selection == "0")
+            (*context) = CLOSE_PROGRAM;
         else 
             cerr << "Error. Not an option" << endl << endl;
     }
