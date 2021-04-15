@@ -631,7 +631,7 @@ status_t ready_to_play_context(context_t *context, int sockfd, MatchInfo *matchI
     return STATUS_OK;
 }
 
-status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo)
+status_t in_a_game_context(context_t *context, int sockfd, MatchInfo matchInfo)
 {
     status_t status;
     string stdin_message;
