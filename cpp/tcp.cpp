@@ -180,10 +180,9 @@ status_t logout(int sockfd)
     return STATUS_OK;
 }
 
-status_t invite(int sockfd, string player_name, bool *response)
+status_t invite(int sockfd, string player_name, T3PCommand *t3pCommand)
 {
     T3PResponse t3pResponse;
-    T3PCommand t3pCommand;
     string message = "INVITE|";
     regex playerNameChecker("^[a-zA-Z]+$");
 
@@ -208,7 +207,7 @@ status_t invite(int sockfd, string player_name, bool *response)
         return ERROR_STATUS_MESSAGE;
 
     // Wait for response from server
-    if (receive_tcp_command(sockfd, &t3pCommand) != STATUS_OK)
+    if (receive_tcp_command(sockfd, t3pCommand) != STATUS_OK)
         return ERROR_RECEIVING_MESSAGE;
 
     return STATUS_OK;

@@ -48,7 +48,7 @@ status_t t3p_client()
                 }
                 break;
             case CONNECT:
-                get_player_name(&playerName);
+                playerName = get_player_name();
                 cout << "Getting connected socket..." << endl;
                 if ((status = get_connected_socket(server.ip, &connectedSockfd)) != STATUS_OK)
                 {
@@ -56,16 +56,19 @@ status_t t3p_client()
                     sleep(2);
                     context = MAIN_MENU;
                 }
-                cout << "OK." << endl;
-                cout << "Logging in..." << endl;
-                if ((status = login(connectedSockfd, playerName)) != STATUS_OK) 
+                else
                 {
-                    cerr << "Error bad login" << endl;
-                    context = MAIN_MENU;
-                    close(connectedSockfd);
+                    cout << "OK." << endl;
+                    cout << "Logging in..." << endl;
+                    if ((status = login(connectedSockfd, playerName)) != STATUS_OK)
+                    {
+                        cerr << "Error bad login" << endl;
+                        context = MAIN_MENU;
+                        close(connectedSockfd);
+                    }
+                    else
+                        context = LOBBY_MENU;
                 }
-                else 
-                    context = LOBBY_MENU;
                 break;
             case LOBBY_MENU:
                 if ((status = lobby_menu(&context, connectedSockfd)) != STATUS_OK) 
