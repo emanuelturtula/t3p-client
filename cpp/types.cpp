@@ -109,10 +109,10 @@ void MatchInfo::printSlots(){
         for (size_t i = 0+((line-1)*3); i < line*3; i++){
     
             if(printVector[i] == CIRCLE)
-                cout << " o ";
+                cout << " O ";
             
             else if(printVector[i] == CROSS)
-                cout << " x ";
+                cout << " X ";
     
             else 
                 cout << "   ";
