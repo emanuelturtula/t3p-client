@@ -370,43 +370,6 @@ tcpcommand_t parse_tcp_command(string socket_message, string *argument)
  * Poll
  * */
 
-// General poll function. Polls for sockfd for 5 seconds and copies the result of data readed in "data_stream"
-status_t poll_tcp_message(int sockfd, string *data_stream){
-
-    char c_response[BUFFER_SIZE];
-    string response;
-
-    memset(c_response, 0, strlen(c_response));
-
-    struct pollfd pfds[1]; // We monitor sockfd
-
-    pfds[0].fd = sockfd;        // Sock input
-    pfds[0].events = POLLIN;    // Tell me when ready to read
-
-    int num_events = poll(pfds, 1, 30000); // We pool for 30 sec.
-
-    if (num_events == 0) {
-        (*data_stream) == ""; // We do not return anything
-    } else {
-        int pollin_happened = pfds[0].revents & POLLIN;
-
-        if (pfds[0].revents & POLLIN){ // Sockfd has been written
-
-            int bytes = recv(sockfd, c_response, sizeof(c_response), 0);
-
-            if (bytes < 0)
-                return ERROR_RECEIVING_MESSAGE;
-
-            (*data_stream) = c_response;
-            return STATUS_OK;
-
-        }else {
-            return ERROR_UNEXPECTED_EVENT_POLL_TCP_INVITATION_FROM;
-        }
-    }
-    return STATUS_OK;
-}
-
 status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_message, int timeout)
 {   
     status_t status;

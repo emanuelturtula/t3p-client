@@ -89,13 +89,13 @@ status_t t3p_client()
                 }
                 break;      
             case READY_TO_PLAY:
-                if((status = ready_to_play_context(connectedSockfd, &context, &matchInfo)) != STATUS_OK)
+                if((status = ready_to_play_context(&context, connectedSockfd, &matchInfo)) != STATUS_OK)
                 {
 
                 }
                 break;
             case IN_A_GAME:
-                if ((status = in_a_game_context(connectedSockfd, &context, matchInfo)) != STATUS_OK) 
+                if ((status = in_a_game_context(&context, connectedSockfd, matchInfo)) != STATUS_OK) 
                 {
                     // Handle error
                 }
