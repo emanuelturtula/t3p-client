@@ -176,10 +176,25 @@ void MatchInfo :: printSlotsNumpad()
 map<string, status_t> T3PStatusCodeMapper {
     {"200", STATUS_OK},
     {"400", ERROR_BAD_REQUEST},
+    {"401", ERROR_INCORRECT_NAME},
+    {"402", ERROR_NAME_TAKEN},
+    {"403", ERROR_PLAYER_NOT_FOUND},
+    {"404", ERROR_PLAYER_OCCUPIED},
     {"405", ERROR_BAD_SLOT},
     {"406", ERROR_NOT_TURN},
+    {"407", ERROR_INVALID_COMMAND},
     {"408", ERROR_COMMAND_OUT_OF_CONTEXT},
     {"500", ERROR_SERVER_ERROR}
+};
+
+map<string, tcpcommand_t> TCPCommandTranslator = {
+    {"INVITEFROM", INVITEFROM},
+    {"INVITATIONTIMEOUT", INVITATIONTIMEOUT},
+    {"ACCEPT", ACCEPT},
+    {"DECLINE", DECLINE},
+    {"TURNPLAY", TURNPLAY},
+    {"TURNWAIT", TURNWAIT},
+    {"MATCHEND", MATCHEND}
 };
 
 map<status_t,string> DICTIONARY_InternalServerErrorsMessages = {

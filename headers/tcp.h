@@ -11,6 +11,8 @@
 
 using namespace std;
 
+void heartbeat_thread(context_t *context, int *sockfd);
+
 status_t get_connected_socket(string ip, int *sockfd);
 status_t login(int sockfd, string player_name);
 status_t logout(int sockfd);
@@ -20,8 +22,6 @@ status_t wait_invitation_response(int sockfd, bool *accept);
 status_t invitation_response(int sockfd, bool response);
 status_t markslot(int sockfd, string slot);
 status_t giveup(int sockfd);
-
-void heartbeat_thread(context_t *context, int *sockfd);
 
 status_t send_tcp_message(int sockfd, const char *message);
 status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse);

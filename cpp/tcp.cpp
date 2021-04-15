@@ -101,6 +101,23 @@ status_t T3PServerMessages::parse_buffer(string dataStream){
  * END--------Methods for T3PCommand
  * */
 
+void heartbeat_thread(context_t *context, int *sockfd)
+{
+    const char *message = "HEARTBEAT \r\n \r\n";
+    while (*context != CLOSE_PROGRAM)
+    {
+        while((*context != MAIN_MENU) && (*context != SEARCH_LOCAL_SERVERS_MENU) && (*context != SEARCH_BY_IP_MENU))
+        {
+            if (connected == true)
+            {
+                if (send_tcp_message(*sockfd, message) != STATUS_OK);
+                    return;
+                sleep(2);
+            }   
+        }
+        sleep(2);
+    }
+}
 
 status_t get_connected_socket(string ip, int *sockfd)
 {
@@ -182,6 +199,8 @@ status_t logout(int sockfd)
 
 status_t invite(int sockfd, string player_name, T3PCommand *t3pCommand)
 {
+    extern map<string, status_t> T3PStatusCodeMapper;
+    status_t status;
     T3PResponse t3pResponse;
     string message = "INVITE|";
     regex playerNameChecker("^[a-zA-Z]+$");
@@ -196,19 +215,19 @@ status_t invite(int sockfd, string player_name, T3PCommand *t3pCommand)
     message += player_name + " \r\n \r\n";
     
     // send invite
-    if (send_tcp_message(sockfd, message.c_str()) != STATUS_OK)
-        return ERROR_SENDING_MESSAGE;
+    if ((status = send_tcp_message(sockfd, message.c_str())) != STATUS_OK)
+        return status;
 
     // receive the 200|ok
-    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
-        return ERROR_RECEIVING_MESSAGE;
+    if ((status = receive_tcp_message(sockfd, &t3pResponse)) != STATUS_OK)
+        return status;
 
     if (t3pResponse.statusMessage != "OK")
-        return ERROR_STATUS_MESSAGE;
+        return T3PStatusCodeMapper[t3pResponse.statusCode];
 
     // Wait for response from server
-    if (receive_tcp_command(sockfd, t3pCommand) != STATUS_OK)
-        return ERROR_RECEIVING_MESSAGE;
+    if ((status = receive_tcp_command(sockfd, t3pCommand)) != STATUS_OK)
+        return status;
 
     return STATUS_OK;
 }
@@ -264,24 +283,6 @@ status_t wait_invitation_response(int sockfd, bool *accept)
         return ERROR_BAD_MESSAGE_FORMAT;
     
     return STATUS_OK;
-}
-
-void heartbeat_thread(context_t *context, int *sockfd)
-{
-    const char *message = "HEARTBEAT \r\n \r\n";
-    while (*context != CLOSE_PROGRAM)
-    {
-        while((*context != MAIN_MENU) && (*context != SEARCH_LOCAL_SERVERS_MENU) && (*context != SEARCH_BY_IP_MENU))
-        {
-            if (connected == true)
-            {
-                send_tcp_message(*sockfd, message);
-                sleep(2);
-            }   
-        }
-        sleep(2);
-    }
-
 }
 
 /* According to variable "response" it sends an ACCEPT or DECLINE command.
@@ -340,8 +341,6 @@ status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse)
 
     if ((status = peek_tcp_buffer(sockfd, &read_bytes, &socket_message)) != STATUS_OK)
         return status;
-    
-
     
     if ((pos = socket_message.find(" \r\n \r\n")) != string :: npos)
         strip_bytes = pos + strlen(" \r\n \r\n");
@@ -561,16 +560,7 @@ status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_m
 
 tcpcommand_t parse_tcp_command(string socket_message, string *argument)
 {
-    map<string, tcpcommand_t> TCPCommandTranslator = {
-        {"INVITEFROM", INVITEFROM},
-        {"INVITATIONTIMEOUT", INVITATIONTIMEOUT},
-        {"ACCEPT", ACCEPT},
-        {"DECLINE", DECLINE},
-        {"TURNPLAY", TURNPLAY},
-        {"TURNWAIT", TURNWAIT},
-        {"MATCHEND", MATCHEND}
-    };
-
+    extern map<string, tcpcommand_t> TCPCommandTranslator;
     string tcpCommand;
     if (socket_message.find("|") != string :: npos)
     {
