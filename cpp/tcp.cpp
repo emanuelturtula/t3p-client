@@ -110,7 +110,7 @@ void heartbeat_thread(context_t *context, int *sockfd)
         {
             if (connected == true)
             {
-                if (send_tcp_message(*sockfd, message) != STATUS_OK);
+                if (send_tcp_message(*sockfd, message) != STATUS_OK)
                     return;
                 sleep(2);
             }   
