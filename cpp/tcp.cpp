@@ -25,7 +25,11 @@ void heartbeat_thread(context_t *context, int *sockfd)
     const char *message = "HEARTBEAT \r\n \r\n";
     while (*context != CLOSE_PROGRAM)
     {
-        while((*context != MAIN_MENU) && (*context != SEARCH_LOCAL_SERVERS_MENU) && (*context != SEARCH_BY_IP_MENU) && (*context != CLOSE_PROGRAM))
+        while(  (*context == LOBBY_MENU) || 
+                (*context == INVITE_MENU) ||
+                (*context == RANDOMINVITE_MENU) ||
+                (*context == READY_TO_PLAY) ||
+                (*context == IN_A_GAME))
         {
             if (send_tcp_message(*sockfd, message) != STATUS_OK)
                 return;

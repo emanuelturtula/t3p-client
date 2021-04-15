@@ -192,6 +192,8 @@ status_t t3p_client()
                 {
                     errorHandler.handleError(status, &context, &connectedSockfd);
                 }
+                else
+                    context = MAIN_MENU;
                 break;
             default:
                 cout << "Context unknown. Returning to LOBBY" << endl;

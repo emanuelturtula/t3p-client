@@ -239,6 +239,9 @@ void ErrorHandler :: handleError(status_t status, context_t *context, int *socke
     {
         switch(status)
         {
+            case INFO_NO_PLAYERS_AVAILABLE:
+                *context = LOBBY_MENU;
+                break;
             default:
                 break;
         }
