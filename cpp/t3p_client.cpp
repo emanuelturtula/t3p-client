@@ -114,6 +114,10 @@ status_t t3p_client()
         }   
     }
 
+    // If heartbeat thread is still running, wait until it stops
+    if (heartbeatThread.joinable())
+        heartbeatThread.join();
+
     return STATUS_OK;
 }
 
