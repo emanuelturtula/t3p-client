@@ -14,6 +14,7 @@ status_t t3p_client()
     string invitationhost;
     int connectedSockfd;
     MatchInfo matchInfo;
+    ErrorHandler errorHandler;
     thread heartbeatThread(heartbeat_thread, &context, &connectedSockfd);
 
     while (context != CLOSE_PROGRAM)
@@ -21,92 +22,178 @@ status_t t3p_client()
         switch(context)
         {
             case MAIN_MENU:
+                // This function always returns an status ok, so no error handler is needed here
                 main_menu(&context);
                 break;
             case SEARCH_LOCAL_SERVERS_MENU:
+                /** 
+                 * Search local servers can return:
+                 * ERROR SOCKET CREATION
+                 * ERROR SOCKET CONFIGURATION
+                 * ERROR SENDING MESSAGE
+                 * ERROR RECEIVING MESSAGE
+                 * ERROR BAD REQUEST 
+                 * Normally, when this kind of errors happen (except for BAD REQUEST), the error handler will
+                 * close the socket. However, in this case, we are treating a UDP socket,
+                 * which is closed before returning from the functions send_discover_broadcast
+                 * or send_discover, for any status code, so we pass a NULL pointer to indicate
+                 * the error handler to avoid closing the socket.
+                 **/
+
                 if ((status = search_local_servers_menu(&context, &server)) != STATUS_OK) 
                 {
-
+                    errorHandler.handleError(status, &context, NULL);
                 }
                 break;
             case SEARCH_BY_IP_MENU:
+                /**
+                 * Same as search local servers
+                 * */
                 if ((status = search_by_ip_menu(&context, &server)) != STATUS_OK) 
                 {
-                    
+                    errorHandler.handleError(status, &context, NULL);
                 }
                 break;
             case FAST_CONNECT_MENU:
-                if ((status = fast_connect_menu(&context, &server)) != STATUS_OK) 
-                {
-                    
-                }
+                // This function always return status ok.
+                fast_connect_menu(&context, &server);
                 break;
             case READY_TO_CONNECT:
-                if ((status = connect_menu(&context, server)) != STATUS_OK) 
-                {
-                    
-                }
+                // This function always return status ok.
+                connect_menu(&context, server);
                 break;
             case CONNECT:
                 playerName = get_player_name();
                 cout << "Getting connected socket..." << endl;
                 if ((status = get_connected_socket(server.ip, &connectedSockfd)) != STATUS_OK)
                 {
-                    cerr << "Error connecting to server" << endl;
-                    sleep(2);
-                    context = MAIN_MENU;
+                    /**
+                     * This function can return 
+                     * ERROR SOCKET CREATION
+                     * ERROR CONNECTING
+                     * When treating TCP sockets, we delegate the closure to
+                     * the error handler.
+                     * */
+                    errorHandler.handleError(status, &context, &connectedSockfd);
                 }
                 else
                 {
                     cout << "OK." << endl;
                     cout << "Logging in..." << endl;
-                    if ((status = login(connectedSockfd, playerName)) != STATUS_OK)
+                    while (context == CONNECT)
                     {
-                        cerr << "Error bad login" << endl;
-                        context = MAIN_MENU;
-                        close(connectedSockfd);
+                        if ((status = login(connectedSockfd, playerName)) != STATUS_OK)
+                        {
+                            /**
+                             * Login function can return
+                             * BAD REQUEST (Weird that happens in this client unless we are having connection problems)
+                             * INCORRECT NAME
+                             * NAME TAKEN
+                             * COMMAND OUT OF CONTEXT (Shouldn't happen in the client as we send the commands in a context 
+                             * controlled way, meaning the user does not insert the commands manually, so commands are rarely
+                             * out of context)
+                             * SERVER ERROR
+                             * ERROR RECEIVING MESSAGE
+                             * ERROR SENDING MESSAGE
+                             * 
+                             * We want only to close the socket if we are having problems that have something
+                             * to do with connection problems or any case that is not a user related problem.
+                             * We don't want the user to have to start back again from MAIN MENU if he inserted a wrong
+                             * name or if the name is taken
+                             * */
+                            if ((status != ERROR_INCORRECT_NAME) && (status != ERROR_NAME_TAKEN))
+                                errorHandler.handleError(status, &context, &connectedSockfd);
+                        }
+                        else
+                            context = LOBBY_MENU;
                     }
-                    else
-                        context = LOBBY_MENU;
                 }
                 break;
             case LOBBY_MENU:
+                /**
+                 * LOBBY can generate these error status:
+                 * ERROR RECEIVING MESSAGE
+                 * ERROR BAD REQUEST
+                 * */
                 if ((status = lobby_menu(&context, connectedSockfd)) != STATUS_OK) 
                 {
-
+                    errorHandler.handleError(status, &context, &connectedSockfd);
                 }
                 break;
             case INVITE_MENU:
+                /**
+                 * invite menu can generate these error status:
+                 * ERROR RECEIVING MESSAGE
+                 * ERROR BAD REQUEST
+                 * ERROR SENDING MESSAGE
+                 * ERROR_BAD_PLAYER_NAME
+                 * ERROR INCORRECT NAME
+                 * ERROR PLAYER NOT FOUND
+                 * ERROR PLAYER OCCUPIED
+                 * ERROR COMMAND OUT OF CONTEXT
+                 * ERROR SERVER ERROR
+                 * */
                 if ((status = invite_menu(&context, server, playerName, connectedSockfd)) != STATUS_OK) 
                 {
-
+                    errorHandler.handleError(status, &context, &connectedSockfd);
                 }
                 break;
             case RANDOMINVITE_MENU:
+                /**
+                 * these error status can be returned:
+                 * INFO NO PLAYERS AVAILABLE
+                 * ERROR SENDING MESSAGE
+                 * ERROR RECEIVING MESSAGE
+                 * ERROR BAD REQUEST
+                 * ERROR SERVER ERROR
+                 * */
                 if ((status = random_invite_menu(&context, connectedSockfd)) != STATUS_OK) 
                 {
-
+                    errorHandler.handleError(status, &context, &connectedSockfd);
                 }
                 break;      
             case READY_TO_PLAY:
+                /**
+                 * Here we can get
+                 * ERROR RECEIVING MESSAGE
+                 * ERROR SETTING MATCH (this is weird, but if this happens, it is almost certain that
+                 * it is because the server died or is hanged. So we want to close the socket here too)
+                 * */
                 if((status = ready_to_play_context(&context, connectedSockfd, &matchInfo)) != STATUS_OK)
                 {
-
+                    errorHandler.handleError(status, &context, &connectedSockfd);
                 }
                 break;
             case IN_A_GAME:
-                if ((status = in_a_game_context(&context, connectedSockfd, matchInfo)) != STATUS_OK) 
+                /**
+                 * While we are in a game, we could get
+                 * ERROR RECEIVING MESSAGE
+                 * ERROR SENDING MESSAGE
+                 * ERROR BAD REQUEST
+                 * ERROR BAD SLOT
+                 * ERROR NOT TURN
+                 * ERROR SERVER ERROR
+                 * ERROR COMMAND OUT OF CONTEXT
+                 * */
+                if ((status = in_a_game_context(&context, connectedSockfd, &matchInfo)) != STATUS_OK) 
                 {
-                    // Handle error
+                    errorHandler.handleError(status, &context, &connectedSockfd);
                 }
                 break;
             case LOGOUT:
+                /**
+                 * LOGOUT can return
+                 * ERROR RECEIVING MESSAGE
+                 * ERROR SENDING MESSAGE
+                 * ERROR BAD REQUEST
+                 * ERROR COMMAND OUT OF CONTEXT
+                 * */
                 if ((status = logout(connectedSockfd)) != STATUS_OK) 
                 {
-                    // Handle error
+                    errorHandler.handleError(status, &context, &connectedSockfd);
                 }
-                close(connectedSockfd);
-                context = MAIN_MENU;
+                else
+                    context = MAIN_MENU;
                 break;
             default:
                 cout << "Context unknown. Returning to LOBBY" << endl;

@@ -1,5 +1,6 @@
 #include "../headers/types.h"
 #include "../headers/tcp.h"
+#include <unistd.h>
 #include <string>
 #include <list>
 
@@ -75,7 +76,9 @@ void Slot :: clear()
     this->available = true;
 }
 
-/*Methods for MatchInformation*/
+/**
+ * Methods for MatchInfo
+ * */
 
 MatchInfo :: MatchInfo()
 {
@@ -86,7 +89,6 @@ MatchInfo :: MatchInfo()
     this->clearSlots();
 }
 
-
 void MatchInfo :: clearSlots()
 {
     int i;
@@ -96,14 +98,6 @@ void MatchInfo :: clearSlots()
     }
 }
 
-
-/*Prints Slots in next format example:
- o | - | x 
------------     
-   | x |   
------------
-   | x |   
-*/
 void MatchInfo::printSlots(){
 
     size_t line = 1;
@@ -115,10 +109,10 @@ void MatchInfo::printSlots(){
         for (size_t i = 0+((line-1)*3); i < line*3; i++){
     
             if(printVector[i] == CIRCLE)
-                cout << " o ";
+                cout << " O ";
             
             else if(printVector[i] == CROSS)
-                cout << " x ";
+                cout << " X ";
     
             else 
                 cout << "   ";
@@ -197,4 +191,62 @@ map<string, tcpcommand_t> TCPCommandTranslator = {
     {"TURNWAIT", TURNWAIT},
     {"MATCHEND", MATCHEND}
 };
+
+map<status_t, string> StatusTranslator = {
+    {INFO_NO_PLAYERS_AVAILABLE, "INFORMATION - No players available"},
+    {ERROR_BAD_REQUEST, "ERROR - Bad request"},
+    {ERROR_INCORRECT_NAME, "ERROR - Incorrect name"},
+    {ERROR_NAME_TAKEN, "ERROR - Name taken"},
+    {ERROR_PLAYER_NOT_FOUND, "ERROR - Player not found"},
+    {ERROR_PLAYER_OCCUPIED, "ERROR - Player occupied"},
+    {ERROR_BAD_SLOT, "ERROR - Bad slot"},
+    {ERROR_NOT_TURN, "ERROR - Not your turn"},
+    {ERROR_INVALID_COMMAND, "ERROR - Invalid command"},
+    {ERROR_COMMAND_OUT_OF_CONTEXT, "ERROR - Command out of context"},
+    {ERROR_SERVER_ERROR, "ERROR - Server error"},
+    {ERROR_RECEIVING_MESSAGE, "ERROR - Receiving message"},
+    {ERROR_SENDING_MESSAGE, "ERROR - Sending message"},
+    {ERROR_SOCKET_CREATION, "ERROR - Socket creation"},
+    {ERROR_NO_SERVERS_ONLINE, "ERROR - No servers online"},
+    {ERROR_SETTING_MATCH, "ERROR - Setting match failed"},
+    {ERROR_CONNECTING, "ERROR - Connecting"}
+};
+
+
+ErrorHandler :: ErrorHandler()
+{
+
+}
+
+void ErrorHandler :: printError(status_t status)
+{
+    sleep(2);
+    cerr << StatusTranslator[status] << endl;
+}
+
+void ErrorHandler :: handleError(status_t status, context_t *context, int *socket)
+{
+    this->printError(status);
+    if ((status == ERROR_SENDING_MESSAGE) ||
+        (status == ERROR_RECEIVING_MESSAGE) ||
+        (status == ERROR_SERVER_ERROR) ||
+        (status == ERROR_SETTING_MATCH))
+    {
+        if (socket != NULL)
+            close(*socket);
+        *context = MAIN_MENU;
+    }
+    else
+    {
+        switch(status)
+        {
+            case INFO_NO_PLAYERS_AVAILABLE:
+                *context = LOBBY_MENU;
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 
