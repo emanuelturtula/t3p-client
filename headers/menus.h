@@ -19,7 +19,7 @@ status_t ready_to_play_context_setup(int sockfd, context_t *context, MatchInfo *
 status_t in_a_game_context(int sockfd, context_t *context, MatchInfo matchInfo);
 
 string get_player_name();
-bool isPlayerNameCorrect(string playerName)
+bool isPlayerNameCorrect(string playerName);
 
 #define LOBBY_MENU_TITLE "TicTacToe LOBBY MENU\n----------------------------------\n\n"
 #define INVITE_MENU_TITLE "TicTacToe INVITE MENU\n----------------------------------\n\n"
