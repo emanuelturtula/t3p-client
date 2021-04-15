@@ -14,6 +14,7 @@ status_t t3p_client()
     string invitationhost;
     int connectedSockfd;
     MatchInfo matchInfo;
+    ErrorHandler errorHandler;
     thread heartbeatThread(heartbeat_thread, &context, &connectedSockfd);
 
     while (context != CLOSE_PROGRAM)
@@ -21,18 +22,36 @@ status_t t3p_client()
         switch(context)
         {
             case MAIN_MENU:
+                // This function always returns an status ok, so no error handler is needed here
                 main_menu(&context);
                 break;
             case SEARCH_LOCAL_SERVERS_MENU:
+                /** 
+                 * Search local servers can return:
+                 * ERROR SOCKET CREATION
+                 * ERROR SOCKET CONFIGURATION
+                 * ERROR SENDING MESSAGE
+                 * ERROR RECEIVING MESSAGE
+                 * ERROR BAD REQUEST 
+                 * Normally, when this kind of errors happen (except for BAD REQUEST), the error handler will
+                 * close the socket. However, in this case, we are treating a UDP socket,
+                 * which is closed before returning from the functions send_discover_broadcast
+                 * or send_discover, for any status code, so we pass a NULL pointer to indicate
+                 * the error handler to avoid closing the socket.
+                 **/
+
                 if ((status = search_local_servers_menu(&context, &server)) != STATUS_OK) 
                 {
-
+                    errorHandler.handleError(status, &context, NULL);
                 }
                 break;
             case SEARCH_BY_IP_MENU:
+                /**
+                 * Same as search local servers
+                 * */
                 if ((status = search_by_ip_menu(&context, &server)) != STATUS_OK) 
                 {
-                    
+                    errorHandler.handleError(status, &context, NULL);
                 }
                 break;
             case FAST_CONNECT_MENU:

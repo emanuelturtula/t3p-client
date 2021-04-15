@@ -1,5 +1,6 @@
 #include "../headers/types.h"
 #include "../headers/tcp.h"
+#include <unistd.h>
 #include <string>
 #include <list>
 
@@ -208,17 +209,38 @@ map<status_t, string> StatusTranslator = {
     {ERROR_SOCKET_CREATION, "ERROR - Socket creation"},
     {ERROR_NO_SERVERS_ONLINE, "ERROR - No servers online"},
     {ERROR_SETTING_MATCH, "ERROR - Setting match failed"},
-    {ERROR_CONNECTING, "ERROR - Connecting"},
+    {ERROR_CONNECTING, "ERROR - Connecting"}
+};
 
 
+ErrorHandler :: ErrorHandler()
+{
 
 }
 
 void ErrorHandler :: printError(status_t status)
 {
-    
+    cerr << StatusTranslator[status] << endl;
 }
 
-    ERROR_LOGIN,
-    ERROR_BAD_PLAYER_NAME,
-    ,
+void ErrorHandler :: handleError(status_t status, context_t *context, int *socket)
+{
+    this->printError(status);
+    if ((status == ERROR_SENDING_MESSAGE) ||
+        (status == ERROR_RECEIVING_MESSAGE))
+    {
+        if (socket != NULL)
+            close(*socket);
+        *context = MAIN_MENU;
+    }
+    else
+    {
+        switch(status)
+        {
+            default:
+                break;
+        }
+    }
+}
+
+

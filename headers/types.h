@@ -158,5 +158,5 @@ class ErrorHandler {
     public:
         ErrorHandler();
         void printError(status_t status);
-        void handleError(status_t status, int *socket);
+        void handleError(status_t status, context_t *context, int *socket);
 };
