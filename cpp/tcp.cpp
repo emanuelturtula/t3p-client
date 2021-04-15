@@ -21,86 +21,6 @@ bool connected = false;
 
 using namespace std;
 
-
-/**
- * Methods for T3PCommand
- * */
-T3PServerMessages :: T3PServerMessages()
-{
-    this->name = "";
-    this->dataList.clear();
-}
-
-string T3PServerMessages::getName(){
-    return this->name;
-}
-
-void T3PServerMessages :: clear()
-{
-    this->name = "";
-    this->dataList.clear();
-}
-
-void T3PServerMessages::addData(string data){
-    this->dataList.push_back(data);
-}
-
-status_t T3PServerMessages::setName(string name){
-
-    if( name.compare("INVITATIONTIMEOUT") == 0 ||
-        name.compare("INVITEFROM") == 0 ||
-        name.compare("TURNPLAY") == 0 ||
-        name.compare("TURNWAIT") == 0 ||
-        name.compare("MATCHEND") == 0){
-        this->name = name;
-    }else{
-        return ERROR_BAD_REQUEST;
-    }
-
-    return STATUS_OK;
-}
-
-status_t T3PServerMessages::parse_buffer(string dataStream){
-    size_t pos;
-    status_t status;
-
-    this->clear();
-
-
-    if ((pos = dataStream.rfind(" \r\n \r\n")) == string::npos)
-    return ERROR_BAD_REQUEST;
-
-    // Strip last \r\n
-    dataStream.erase(pos+3);
-
-    // If message contains "|", grab the first part as a command
-    if ((pos = dataStream.find("|")) != string::npos)
-    {
-
-        if (( status = this->setName(dataStream.substr(0, pos))) != STATUS_OK)
-        dataStream.erase(0, pos+1);
-        while ((pos = dataStream.find("|")) != string::npos || (pos = dataStream.find(" \r\n")) != string::npos)
-        {
-            this->addData(dataStream.substr(0, pos));
-            dataStream.erase(0, pos+1);
-        }
-    }
-    // else, the message should only contain the command
-    else 
-    {
-        //I must have it because we checked at the beginning
-        pos = dataStream.find(" \r\n");
-        this->setName(dataStream.substr(0, pos));
-    }
-        
-    return STATUS_OK;
-
-}
-
-/**
- * END--------Methods for T3PCommand
- * */
-
 void heartbeat_thread(context_t *context, int *sockfd)
 {
     const char *message = "HEARTBEAT \r\n \r\n";
@@ -162,16 +82,17 @@ status_t get_connected_socket(string ip, int *sockfd)
 
 status_t login(int sockfd, string player_name)
 {
+    status_t status;
     string message = "LOGIN|";
     T3PResponse t3pResponse;
     
     message += player_name + " \r\n \r\n";
     
-    if (send_tcp_message(sockfd, message.c_str()) != STATUS_OK)
-        return ERROR_SENDING_MESSAGE;
+    if ((status = send_tcp_message(sockfd, message.c_str())) != STATUS_OK)
+        return status;
 
-    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
-        return ERROR_RECEIVING_MESSAGE;
+    if ((status = receive_tcp_message(sockfd, &t3pResponse)) != STATUS_OK)
+        return status;
 
     if (t3pResponse.statusMessage != "OK")
         return ERROR_LOGIN;
@@ -182,12 +103,13 @@ status_t login(int sockfd, string player_name)
 
 status_t logout(int sockfd)
 {
+    status_t status;
     T3PResponse t3pResponse;
     const char *message = "LOGOUT \r\n \r\n";
-    if (send_tcp_message(sockfd, message) != STATUS_OK)
+    if ((status = send_tcp_message(sockfd, message)) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
 
-    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
+    if ((status = receive_tcp_message(sockfd, &t3pResponse)) != STATUS_OK)
         return ERROR_SENDING_MESSAGE;
     
     if (t3pResponse.statusMessage != "OK")
@@ -234,92 +156,66 @@ status_t invite(int sockfd, string player_name, T3PCommand *t3pCommand)
 
 status_t random_invite(int sockfd, T3PCommand *t3pCommand)
 {
+    extern map<string, status_t> T3PStatusCodeMapper;
     T3PResponse t3pResponse;
+    status_t status;
     const char *message = "RANDOMINVITE \r\n \r\n";
     
     // Send the invite
-    if (send_tcp_message(sockfd, message) != STATUS_OK)
-        return ERROR_SENDING_MESSAGE;
+    if ((status = send_tcp_message(sockfd, message)) != STATUS_OK)
+        return status;
 
     // Read the 200 OK
-    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
-        return ERROR_RECEIVING_MESSAGE;
-
-    if (t3pResponse.statusCode == "101")
-        return INFO_NO_PLAYERS_AVAILABLE;
+    if ((status = receive_tcp_message(sockfd, &t3pResponse)) != STATUS_OK)
+        return status;
 
     if (t3pResponse.statusMessage != "OK")
-        return ERROR_STATUS_MESSAGE;
+        return T3PStatusCodeMapper[t3pResponse.statusCode];
 
     // Wait for answer
-    if (receive_tcp_command(sockfd, t3pCommand) != STATUS_OK)
-        return ERROR_RECEIVING_MESSAGE;
+    if ((status = receive_tcp_command(sockfd, t3pCommand)) != STATUS_OK)
+        return status;
     
     return STATUS_OK;
-}
-
-status_t wait_invitation_response(int sockfd, bool *accept)
-{
-    char c_response[BUFFER_SIZE];
-    size_t pos;
-    string response;
-    
-    memset(c_response, 0, strlen(c_response));
-    
-    int bytes = recv(sockfd, c_response, sizeof(c_response), 0);
-    if (bytes < 0)
-        return ERROR_RECEIVING_MESSAGE;
-
-    response = c_response;
-    if (response.rfind(" \r\n \r\n") == string :: npos)
-        return ERROR_BAD_MESSAGE_FORMAT;
-    pos = response.find(" \r\n");
-    response = response.substr(0, pos);
-    if (response == "ACCEPT")
-        *accept = true;
-    else if (response == "DECLINE")
-        *accept = false;
-    else
-        return ERROR_BAD_MESSAGE_FORMAT;
-    
-    return STATUS_OK;
-}
-
-/* According to variable "response" it sends an ACCEPT or DECLINE command.
-    true = ACCEPT
-    false = DECLINE*/
-status_t send_invitation_response(int sockfd, bool response){
-
-    status_t status;
-    string message;
-    if(response == true)
-        message = "ACCEPT \r\n \r\n";
-    else
-        message = "DECLINE \r\n \r\n";
-
-    return send_tcp_message(sockfd, message.c_str()); //returns status_t of function send_tcp_message()
 }
 
 status_t markslot(int sockfd, string slot)
 {
+    extern map<string, status_t> T3PStatusCodeMapper;
+    status_t status;
     T3PResponse t3pResponse;
     T3PCommand t3pCommand;
     string message = "MARKSLOT|" + slot + " \r\n \r\n";
-    if (send_tcp_message(sockfd, message.c_str()) != STATUS_OK)
-        return ERROR_SENDING_MESSAGE;
+    if ((status = send_tcp_message(sockfd, message.c_str())) != STATUS_OK)
+        return status;
     
-    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
-        return ERROR_RECEIVING_MESSAGE;
+    if ((status = receive_tcp_message(sockfd, &t3pResponse)) != STATUS_OK)
+        return status;
     
+    return T3PStatusCodeMapper[t3pResponse.statusCode];
+}
+
+status_t giveup(int sockfd)
+{
+    extern map<string, status_t> T3PStatusCodeMapper;
+    status_t status;
+    T3PResponse t3pResponse;
+    const char* message = "GIVEUP \r\n \r\n";
+
+    if ((status = send_tcp_message(sockfd, message)) != STATUS_OK)
+        return status;
+
+    if ((status = receive_tcp_message(sockfd, &t3pResponse)) != STATUS_OK)
+        return status;
+
     return T3PStatusCodeMapper[t3pResponse.statusCode];
 }
 
 
 /**
- * Internal functions
+ * Senders
  * */
 
-//Sends a message to a connected socket.
 status_t send_tcp_message(int sockfd, const char *message)
 {
     lock_guard<mutex> guard(msend);
@@ -327,6 +223,10 @@ status_t send_tcp_message(int sockfd, const char *message)
         return ERROR_SENDING_MESSAGE;
     return STATUS_OK;
 }
+
+/**
+ * Receivers
+ * */
 
 status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse)
 {
@@ -346,42 +246,11 @@ status_t receive_tcp_message(int sockfd, T3PResponse *t3pResponse)
         strip_bytes = pos + strlen(" \r\n \r\n");
         
     int bytes = recv(sockfd, response, strip_bytes, 0);
-
-    //// AGREGAR PEEK int bytes = recv(sockfd, response, sizeof(response), 0);
     
     if (bytes < 0)
         return ERROR_RECEIVING_MESSAGE;
     if (parse_tcp_message(string(response), t3pResponse) != STATUS_OK)
         return ERROR_BAD_MESSAGE_FORMAT;
-    return STATUS_OK;
-}
-
-status_t parse_tcp_message(string response, T3PResponse *t3pResponse)
-{
-    // Format of TCP messages received in clients are:
-    // STATUS_CODE|STATUS_MESSAGE \r\n \r\n
-    size_t pos;
-    string statusCode;
-    string statusMessage;
-    
-    if ((pos = response.rfind(" \r\n \r\n")) == string::npos)
-        return ERROR_BAD_MESSAGE_FORMAT;
-    response.erase(pos+3);
-
-    if ((pos = response.find("|")) == string::npos)
-        return ERROR_BAD_MESSAGE_FORMAT;
-    
-    statusCode = response.substr(0, pos);
-    response.erase(0, pos+1);
-
-    if ((pos = response.find(" \r\n")) == string::npos)
-        return ERROR_BAD_MESSAGE_FORMAT;
-    
-    statusMessage = response.substr(0, pos);
-
-    (*t3pResponse).statusCode = statusCode;
-    (*t3pResponse).statusMessage = statusMessage;
-
     return STATUS_OK;
 }
 
@@ -420,6 +289,37 @@ status_t peek_tcp_buffer(int sockfd, int *read_bytes, string *socket_message)
     return STATUS_OK;
 }
 
+/**
+ * Parsers
+ * */
+
+status_t parse_tcp_message(string response, T3PResponse *t3pResponse)
+{
+    size_t pos;
+    string statusCode;
+    string statusMessage;
+    
+    if ((pos = response.rfind(" \r\n \r\n")) == string::npos)
+        return ERROR_BAD_MESSAGE_FORMAT;
+    response.erase(pos+3);
+
+    if ((pos = response.find("|")) == string::npos)
+        return ERROR_BAD_MESSAGE_FORMAT;
+    
+    statusCode = response.substr(0, pos);
+    response.erase(0, pos+1);
+
+    if ((pos = response.find(" \r\n")) == string::npos)
+        return ERROR_BAD_MESSAGE_FORMAT;
+    
+    statusMessage = response.substr(0, pos);
+
+    (*t3pResponse).statusCode = statusCode;
+    (*t3pResponse).statusMessage = statusMessage;
+
+    return STATUS_OK;
+}
+
 status_t parse_tcp_command(string message, T3PCommand *t3pCommand)
 {
     size_t pos;
@@ -451,27 +351,24 @@ status_t parse_tcp_command(string message, T3PCommand *t3pCommand)
     return STATUS_OK;
 }
 
-status_t giveup(int sockfd)
+tcpcommand_t parse_tcp_command(string socket_message, string *argument)
 {
-    T3PResponse t3pResponse;
-   // char message[BUFFER_SIZE];
-
-    // format string
-    const char* message = "GIVEUP \r\n \r\n";
-
-    // send giveup
-    if (send_tcp_message(sockfd, message) != STATUS_OK)
-        return ERROR_SENDING_MESSAGE;
-
-
-    if (receive_tcp_message(sockfd, &t3pResponse) != STATUS_OK)
-        return ERROR_RECEIVING_MESSAGE;
-
-    if (t3pResponse.statusMessage != "OK")
-        return ERROR_STATUS_MESSAGE;
-
-    return STATUS_OK;
+    extern map<string, tcpcommand_t> TCPCommandTranslator;
+    string tcpCommand;
+    if (socket_message.find("|") != string :: npos)
+    {
+        tcpCommand = socket_message.substr(0, socket_message.find("|"));
+        socket_message.erase(0, socket_message.find("|")+1);
+        (*argument) = socket_message.substr(0, socket_message.find(" \r\n"));
+    }
+    else
+        tcpCommand = socket_message.substr(0, socket_message.find(" \r\n"));
+    return TCPCommandTranslator[tcpCommand];
 }
+
+/**
+ * Poll
+ * */
 
 // General poll function. Polls for sockfd for 5 seconds and copies the result of data readed in "data_stream"
 status_t poll_tcp_message(int sockfd, string *data_stream){
@@ -558,17 +455,4 @@ status_t poll_event(int connectedSockfd, string *stdin_message, string *socket_m
     return STATUS_OK;
 }
 
-tcpcommand_t parse_tcp_command(string socket_message, string *argument)
-{
-    extern map<string, tcpcommand_t> TCPCommandTranslator;
-    string tcpCommand;
-    if (socket_message.find("|") != string :: npos)
-    {
-        tcpCommand = socket_message.substr(0, socket_message.find("|"));
-        socket_message.erase(0, socket_message.find("|")+1);
-        (*argument) = socket_message.substr(0, socket_message.find(" \r\n"));
-    }
-    else
-        tcpCommand = socket_message.substr(0, socket_message.find(" \r\n"));
-    return TCPCommandTranslator[tcpCommand];
-}
+
