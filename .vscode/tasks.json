@@ -12,7 +12,7 @@
                 "${workspaceFolder}/cpp/*.cpp",
                 "-pthread",
                 "-o",
-                "${workspaceFolder}/debug/debug_client.out"
+                "${workspaceFolder}/client.out"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

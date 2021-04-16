@@ -9,7 +9,7 @@
             "name": "Debug client",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/debug/debug_client.out",
+            "program": "${workspaceFolder}/client.out",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
