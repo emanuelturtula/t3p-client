@@ -15,7 +15,7 @@ status_t t3p_client()
     int connectedSockfd;
     MatchInfo matchInfo;
     ErrorHandler errorHandler;
-    thread heartbeatThread(heartbeat_thread, &context, &connectedSockfd);
+    //thread heartbeatThread(heartbeat_thread, &context, &connectedSockfd);
 
     while (context != CLOSE_PROGRAM)
     {
@@ -202,8 +202,8 @@ status_t t3p_client()
     }
 
     // If heartbeat thread is still running, wait until it stops
-    if (heartbeatThread.joinable())
-        heartbeatThread.join();
+    // if (heartbeatThread.joinable())
+    //     heartbeatThread.join();
 
     return STATUS_OK;
 }

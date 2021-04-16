@@ -24,6 +24,7 @@ enum status_t {
     ERROR_BAD_PLAYER_NAME,
     ERROR_SETTING_MATCH,
     ERROR_NULL_POINTER,
+    ERROR_SOCKET_CLOSED_BY_ENDPOINT,
 
     /*******************************/
     // RFC Responses:

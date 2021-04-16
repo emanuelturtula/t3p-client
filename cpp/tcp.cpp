@@ -13,12 +13,15 @@
 #include <fcntl.h>
 #include <iostream>
 #include <sys/select.h>
+#include <errno.h>
 #include "../headers/tcp.h"
 #include "../headers/types.h"
 
 mutex msend;
 
 using namespace std;
+
+
 
 void heartbeat_thread(context_t *context, int *sockfd)
 {
@@ -65,7 +68,7 @@ status_t get_connected_socket(string ip, int *sockfd)
     if (select((*sockfd) + 1, NULL, &fdset, NULL, &tv) == 1)
     {
         int so_error;
-        socklen_t len = sizeof so_error;
+        socklen_t len = sizeof(so_error);
 
         getsockopt((*sockfd), SOL_SOCKET, SO_ERROR, &so_error, &len);
 
@@ -275,9 +278,12 @@ status_t receive_tcp_command(int sockfd, T3PCommand *t3pCommand)
 
 status_t peek_tcp_buffer(int sockfd, int *read_bytes, string *socket_message)
 {
+    status_t status;
     char message[BUFFER_SIZE] = {0};
     if ((*read_bytes = recv(sockfd, message, sizeof(message), MSG_PEEK)) < 0)
         return ERROR_RECEIVING_MESSAGE;
+    if (*read_bytes == 0)
+        return ERROR_SOCKET_CLOSED_BY_ENDPOINT;
     *socket_message = message;
     return STATUS_OK;
 }

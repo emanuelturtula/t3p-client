@@ -209,7 +209,8 @@ map<status_t, string> StatusTranslator = {
     {ERROR_SOCKET_CREATION, "ERROR - Socket creation"},
     {ERROR_NO_SERVERS_ONLINE, "ERROR - No servers online"},
     {ERROR_SETTING_MATCH, "ERROR - Setting match failed"},
-    {ERROR_CONNECTING, "ERROR - Connecting"}
+    {ERROR_CONNECTING, "ERROR - Connecting"},
+    {ERROR_SOCKET_CLOSED_BY_ENDPOINT, "ERROR - Server disconnected socket"}
 };
 
 
@@ -220,8 +221,8 @@ ErrorHandler :: ErrorHandler()
 
 void ErrorHandler :: printError(status_t status)
 {
-    sleep(2);
     cerr << StatusTranslator[status] << endl;
+    sleep(2);
 }
 
 void ErrorHandler :: handleError(status_t status, context_t *context, int *socket)
@@ -230,7 +231,8 @@ void ErrorHandler :: handleError(status_t status, context_t *context, int *socke
     if ((status == ERROR_SENDING_MESSAGE) ||
         (status == ERROR_RECEIVING_MESSAGE) ||
         (status == ERROR_SERVER_ERROR) ||
-        (status == ERROR_SETTING_MATCH))
+        (status == ERROR_SETTING_MATCH) ||
+        (status == ERROR_SOCKET_CLOSED_BY_ENDPOINT))
     {
         if (socket != NULL)
             close(*socket);
