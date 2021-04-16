@@ -80,33 +80,29 @@ status_t t3p_client()
                 {
                     cout << "OK." << endl;
                     cout << "Logging in..." << endl;
-                    while (context == CONNECT)
+                    if ((status = login(connectedSockfd, playerName)) != STATUS_OK)
                     {
-                        if ((status = login(connectedSockfd, playerName)) != STATUS_OK)
-                        {
-                            /**
-                             * Login function can return
-                             * BAD REQUEST (Weird that happens in this client unless we are having connection problems)
-                             * INCORRECT NAME
-                             * NAME TAKEN
-                             * COMMAND OUT OF CONTEXT (Shouldn't happen in the client as we send the commands in a context 
-                             * controlled way, meaning the user does not insert the commands manually, so commands are rarely
-                             * out of context)
-                             * SERVER ERROR
-                             * ERROR RECEIVING MESSAGE
-                             * ERROR SENDING MESSAGE
-                             * 
-                             * We want only to close the socket if we are having problems that have something
-                             * to do with connection problems or any case that is not a user related problem.
-                             * We don't want the user to have to start back again from MAIN MENU if he inserted a wrong
-                             * name or if the name is taken
-                             * */
-                            if ((status != ERROR_INCORRECT_NAME) && (status != ERROR_NAME_TAKEN))
-                                errorHandler.handleError(status, &context, &connectedSockfd);
-                        }
-                        else
-                            context = LOBBY_MENU;
+                        /**
+                         * Login function can return
+                         * BAD REQUEST (Weird that happens in this client unless we are having connection problems)
+                         * INCORRECT NAME
+                         * NAME TAKEN
+                         * COMMAND OUT OF CONTEXT (Shouldn't happen in the client as we send the commands in a context 
+                         * controlled way, meaning the user does not insert the commands manually, so commands are rarely
+                         * out of context)
+                         * SERVER ERROR
+                         * ERROR RECEIVING MESSAGE
+                         * ERROR SENDING MESSAGE
+                         * 
+                         * When a bad login is made, in any case (also for incorrect name or name taken), the server closes the socket,
+                         * so we have to close our socket, create a new one and connect it again. However, depending on the message received,
+                         * we might want to come back to main menu or to connect menu
+                         * 
+                         * */
+                        errorHandler.handleError(status, &context, &connectedSockfd);
                     }
+                    else
+                        context = LOBBY_MENU;
                 }
                 break;
             case LOBBY_MENU:

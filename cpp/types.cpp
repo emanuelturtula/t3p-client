@@ -248,6 +248,14 @@ void ErrorHandler :: handleError(status_t status, context_t *context, int *socke
             case ERROR_CONNECTING:
                 *context = MAIN_MENU;
                 break;
+            case ERROR_NAME_TAKEN:
+                if (*context == CONNECT)
+                    close(*socket);
+                break;
+            case ERROR_INCORRECT_NAME:
+                if (*context == CONNECT)
+                    close(*socket);
+                break;
             default:
                 break;
         }

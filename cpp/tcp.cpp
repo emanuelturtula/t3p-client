@@ -21,7 +21,7 @@ mutex msend;
 
 using namespace std;
 
-
+extern map<string, int> config;
 
 void heartbeat_thread(context_t *context, int *sockfd)
 {
@@ -50,7 +50,7 @@ status_t get_connected_socket(string ip, int *sockfd)
     
     *sockfd = -1;
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(TCP_PORT);
+    server_addr.sin_port = htons(config["TCP_PORT"]);
     server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
 
     if ((*sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
@@ -62,7 +62,7 @@ status_t get_connected_socket(string ip, int *sockfd)
 
     FD_ZERO(&fdset);
     FD_SET((*sockfd), &fdset);
-    tv.tv_sec = 10;             /* 10 second timeout */
+    tv.tv_sec = config["CONNECTING_TIMEOUT"];             /* 10 second timeout */
     tv.tv_usec = 0;
 
     if (select((*sockfd) + 1, NULL, &fdset, NULL, &tv) == 1)

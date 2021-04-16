@@ -3,7 +3,6 @@
 #include "types.h"
 #include <list>
 
-#define UDP_PORT 2001
 #define BUFFER_SIZE 1024
 
 using namespace std;

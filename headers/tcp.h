@@ -5,8 +5,6 @@
 #include "types.h"
 #include <poll.h>
 
-
-#define TCP_PORT 2000
 #define BUFFER_SIZE 1024
 
 using namespace std;

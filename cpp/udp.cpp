@@ -9,6 +9,8 @@
 #include "../headers/udp.h"
 #include "../headers/types.h"
 
+extern map<string, int> config;
+
 status_t receive(int sockfd, struct sockaddr_in server_addr, list<T3PResponse> *t3pResponseList);
 status_t parse_response(string response, T3PResponse *t3pResponse);
 
@@ -45,7 +47,7 @@ status_t send_discover_broadcast(list<T3PResponse> *t3pResponseList)
 
     // Set server_addr port, protocol and address
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(UDP_PORT);
+    server_addr.sin_port = htons(config["UDP_PORT"]);
     server_addr.sin_addr.s_addr = inet_addr("255.255.255.255");
     
     // Send message
@@ -92,7 +94,7 @@ status_t send_discover(string ip, T3PResponse *t3pResponse)
 
     // Set server_addr port, protocol and address
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(UDP_PORT);
+    server_addr.sin_port = htons(config["UDP_PORT"]);
     server_addr.sin_addr.s_addr = inet_addr(c_ip);
     
     // Send message
