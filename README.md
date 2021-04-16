@@ -1,2 +1,2 @@
-# t3p-client
+# TicTacToe Client
 Client for TaTeTi game 
