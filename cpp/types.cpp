@@ -245,6 +245,9 @@ void ErrorHandler :: handleError(status_t status, context_t *context, int *socke
             case INFO_NO_PLAYERS_AVAILABLE:
                 *context = LOBBY_MENU;
                 break;
+            case ERROR_NO_SERVERS_ONLINE:
+                *context = MAIN_MENU;
+                break;
             case ERROR_CONNECTING:
                 *context = MAIN_MENU;
                 break;
