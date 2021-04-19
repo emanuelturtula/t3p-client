@@ -76,7 +76,7 @@ status_t send_discover(string ip, T3PResponse *t3pResponse)
     int sockfd;
     struct timeval timeout;
     struct sockaddr_in server_addr;
-    char message[32];
+    char message[1024];
     const char *c_ip = ip.c_str();
     list<T3PResponse> t3pResponseList;
     sprintf(message, "DISCOVER|%s \r\n \r\n", c_ip);
@@ -139,6 +139,8 @@ status_t receive(int sockfd, struct sockaddr_in server_addr, list<T3PResponse> *
             return status;
         (*t3pResponseList).push_back(t3pResponse);
     }
+    if ((n < 0) && ((*t3pResponseList).empty()))
+        return ERROR_NO_SERVERS_ONLINE;
 
     return STATUS_OK;
 }
