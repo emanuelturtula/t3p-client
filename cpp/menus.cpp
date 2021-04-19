@@ -62,7 +62,10 @@ status_t search_local_servers_menu(context_t *context, Server *server)
         serverList.clear();
         cout << "Searching local servers" << endl;
         if ((status = send_discover_broadcast(&t3pResponseList)) != STATUS_OK)
-            return status;
+        {
+            if (status != ERROR_NO_SERVERS_ONLINE)
+                return status;
+        }
 
         if (t3pResponseList.empty())
         {
@@ -179,7 +182,16 @@ status_t search_by_ip_menu(context_t *context, Server *server)
         }
 
         if ((status = send_discover(ip, &t3pResponse)) != STATUS_OK)
-            return status;
+        {
+            if (status == ERROR_NO_SERVERS_ONLINE)
+            {
+                cerr << "Error. Server not online" << endl;
+                sleep(2);
+                return STATUS_OK;
+            }
+            else
+                return status;
+        }
         else
         {
             (*server).ip = ip;
