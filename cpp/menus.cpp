@@ -132,11 +132,7 @@ status_t search_local_servers_menu(context_t *context, Server *server)
         }
 
         if ((status = send_discover((*server).ip, &t3pResponse)) != STATUS_OK)
-        {
-            cerr << "Error getting information from server" << endl;
-            sleep(2);
             return status;
-        }
         else
         {
             server->playersAvailable.clear();
@@ -183,11 +179,7 @@ status_t search_by_ip_menu(context_t *context, Server *server)
         }
 
         if ((status = send_discover(ip, &t3pResponse)) != STATUS_OK)
-        {
-            cerr << "Error getting information from server" << endl;
-            sleep(2);
             return status;
-        }
         else
         {
             (*server).ip = ip;
